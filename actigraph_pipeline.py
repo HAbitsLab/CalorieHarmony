@@ -525,9 +525,9 @@ def generate_table_wild(study_path, p_num, state):
     path_acti_vm3 = study_path + "/" + p_num + "/" + state + "/Actigraph/Clean/" + p_num + ' ' + state + " VM3.csv"
     path_watch = study_path + "/" + p_num + "/" + state + '/Wrist/Aggregated/Accelerometer/Accelerometer_resampled.csv'
     if not os.path.exists(path_watch):
-        df_acti_raw = pd.read_csv(study_path + "/" + p_num + "/" + state + '/Wrist/Aggregated/Accelerometer/Accelerometer.csv', index_col=None, header=0)
-        df_acti = resample(df_acti_raw, 'Time', 20, 100)
-        df_acti.to_csv(path_watch, index=False)
+        df_watch_raw = pd.read_csv(study_path + "/" + p_num + "/" + state + '/Wrist/Aggregated/Accelerometer/Accelerometer.csv', index_col=None, header=0)
+        df_watch = resample(df_watch_raw, 'Time', 20, 100)
+        df_watch.to_csv(path_watch, index=False)
         
     df_acti = pd.read_csv(path_acti, index_col=None, header=1)
     df_acti_vm3 = pd.read_csv(path_acti_vm3, index_col=None, header=1)
@@ -545,6 +545,7 @@ def generate_table_wild(study_path, p_num, state):
 
     print('Adding datetime info...')
     actigraph_add_datetime(df_acti)
+    actigraph_add_datetime(df_acti_vm3)
     watch_add_datetime(df_watch)
     print('Done')
 
@@ -623,10 +624,10 @@ def generate_table_lab(study_path, p_num, state):
     path_acti_vm3 = study_path + "/" + p_num + "/" + state + "/Actigraph/Clean/" + p_num + ' ' + state + " VM3.csv"
     path_watch = study_path + "/" + p_num + "/" + state + '/Wrist/Aggregated/Accelerometer/Accelerometer_resampled.csv'
     if not os.path.exists(path_watch):
-        df_acti_raw = pd.read_csv(study_path + "/" + p_num + "/" + state + '/Wrist/Aggregated/Accelerometer/Accelerometer.csv', index_col=None, header=0)
-        df_acti = resample(df_acti_raw, 'Time', 20, 100)
-        df_acti.to_csv(path_watch, index=False)
-
+        df_watch_raw = pd.read_csv(study_path + "/" + p_num + "/" + state + '/Wrist/Aggregated/Accelerometer/Accelerometer.csv', index_col=None, header=0)
+        df_watch = resample(df_watch_raw, 'Time', 20, 100)
+        df_watch.to_csv(path_watch, index=False)
+        
     df_acti = pd.read_csv(path_acti, index_col=None, header=1)
     df_acti_vm3 = pd.read_csv(path_acti_vm3, index_col=None, header=1)
     df_watch = pd.read_csv(path_watch, index_col=None, header=0)
@@ -643,6 +644,7 @@ def generate_table_lab(study_path, p_num, state):
 
     print('Adding datetime info...')
     actigraph_add_datetime(df_acti)
+    actigraph_add_datetime(df_acti_vm3)
     watch_add_datetime(df_watch)
     print('Done')
 
