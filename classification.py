@@ -258,14 +258,14 @@ def build_classification_model(study_path, p_nums):
     target = []
 
     tables = []
-    max_intensity = []
+    # max_intensity = []
 
     for p in participants:
         path_table = study_path+'/'+p+'/In Lab/Summary/Actigraph/'+p+' In Lab IntensityMETActivityLevel.csv'
         df_table = pd.read_csv(path_table, index_col=None, header=0)
 
         tables.append(df_table)
-        max_intensity.append(np.nanmax(df_table['Watch Intensity']))
+        # max_intensity.append(np.nanmax(df_table['Watch Intensity']))
 
         path_ts = study_path+'/'+p+'/In Lab/'+p+' In Lab Log.csv'
         df_ts = pd.read_csv(path_ts, index_col=None, header=0)
@@ -316,11 +316,11 @@ def build_classification_model(study_path, p_nums):
     ainsworth_reshaped = np.array(l_ainsworth).reshape(-1, 1)
     instensity_reshaped = np.array(l_intensity).reshape(-1, 1)
 
-    regr = linear_model.LinearRegression()
-    regr.fit(instensity_reshaped, ainsworth_reshaped)
+    regr = linear_model.LinearRegression(fit_intercept=False)
+    regr.fit(instensity_reshaped, ainsworth_reshaped-1.3)
     print("intensity_coef (regression coef) = %.4g" % regr.coef_)
 
-    print("intensity_coef (mean of max intensity) = %.4g" % np.nanmean(max_intensity))
+    # print("intensity_coef (mean of max intensity) = %.4g" % (float(8)/float(np.nanmean(max_intensity))))
 
     new_data_gyro = [n for n in data_gyro if np.count_nonzero(np.isnan(n[0]))<(n[0].size/2)]
     new_target_gyro = [target[i] for i in range(len(data_gyro)) if np.count_nonzero(np.isnan(data_gyro[i][0]))<(data_gyro[i][0].size/2)]

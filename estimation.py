@@ -355,7 +355,8 @@ def test_and_estimate(study_path,p_nums):
     # rescale the intensity values
     # add the results to the tables
 
-    intensity_coef = 8/13.7302
+    # intensity_coef = 8/13.7302
+    intensity_coef = 0.4062
 
     for t in tables:
         t['scaled_intensity'] = t['Watch Intensity']*intensity_coef + 1.3
