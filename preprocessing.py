@@ -16,6 +16,7 @@ import shutil
 from acti_watch_summary import generate_summary
 
 
+#todo: check if you need this
 def check_split_weartime_file(study_path, p_num, state):
     summary_files = ['SummaryDayLevel.csv', 'SummaryWearTime.csv']
     path_to_acti_summary = os.path.join(study_path, p_num, state, 'Summary', 'Actigraph')
@@ -383,6 +384,7 @@ def plot_data_acti(df_acti, df_ts, study_path, p_num, state):
     # fig.show()
 
 
+#todo: keep
 def get_intensity(watch_df, st):
     et = st + pd.DateOffset(minutes=1)
     temp = watch_df.loc[(watch_df['Datetime'] >= st) & (watch_df['Datetime'] < et)].reset_index(drop=True)
@@ -410,7 +412,7 @@ def get_intensity(watch_df, st):
     else:
         return np.nan
 
-
+#todo: keep
 def get_met_freedson(df_acti, st):
     et = st + pd.DateOffset(minutes=1)
     temp = df_acti.loc[(df_acti['Datetime'] >= st) & (df_acti['Datetime'] < et)].reset_index(drop=True)
@@ -420,7 +422,7 @@ def get_met_freedson(df_acti, st):
     else:
         return np.nan
 
-
+#todo: keep
 def get_met_vm3(df_acti, st):
     et = st + pd.DateOffset(minutes=1)
     temp = df_acti.loc[(df_acti['Datetime'] >= st) & (df_acti['Datetime'] < et)].reset_index(drop=True)
@@ -428,13 +430,14 @@ def get_met_vm3(df_acti, st):
     met = 0.000863 * vm3 + 0.668876
     return met
 
+#todo: keep
 def get_met_output(df_acti, st):
     et = st + pd.DateOffset(minutes=1)
     temp = df_acti.loc[(df_acti['Datetime'] >= st) & (df_acti['Datetime'] < et)].reset_index(drop=True)
     output = temp['MET rate'][0]
     return output
 
-
+#todo: MOVE to utlity.py
 def plot_data_watch_without_ts(df_watch, study_path, p_num, state):
     df_watch_20 = df_watch.loc[df_watch.index % 20 == 0].reset_index(drop=True)
 
@@ -446,7 +449,7 @@ def plot_data_watch_without_ts(df_watch, study_path, p_num, state):
     fig.write_image(study_path + "/" + p_num + "/" + state + "/Actigraph/" + p_num + ' ' + state + ' watch.png')
     # fig.show()
 
-
+#todo: MOVE to utlity.py
 def plot_data_acti_without_ts(df_acti, study_path, p_num, state):
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=df_acti['Datetime'], y=df_acti['axis2'], mode='lines', name='x-axis'))
@@ -482,7 +485,7 @@ def get_3d_sqd(watch_df, st):
     else:
         return [np.nan, np.nan, np.nan]
 
-
+#todo: check if needed
 def get_3d_raw(watch_df, st):
     et = st + pd.DateOffset(minutes=1)
     temp = watch_df.loc[(watch_df['Datetime'] >= st) & (watch_df['Datetime'] < et)].reset_index(drop=True)
@@ -494,7 +497,7 @@ def get_3d_raw(watch_df, st):
     else:
         return [np.nan, np.nan, np.nan]
 
-
+#todo: remove
 def get_sign_change_count(watch_df, st):
     et = st + pd.DateOffset(minutes=1)
     temp = watch_df.loc[(watch_df['Datetime'] >= st) & (watch_df['Datetime'] < et)].reset_index(drop=True)
