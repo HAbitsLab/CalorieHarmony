@@ -8,6 +8,19 @@ from time import time
 import joblib
 
 
+def embedding(gyro_data):
+    output = []
+    for m in gyro_data:
+        temp = []
+        for n in m:
+            for i in range(int(len(n)/10)):
+                temp2 = np.array(n[i*10:i*10+10])
+                temp.append(np.mean(temp2))
+                temp.append(np.var(temp2))
+        output.append(temp)
+    return np.array(output)
+
+
 def get_data_target_table(study_path, p_nums):
     """
     The script preprocessing.py needs to be run first to have the tables generated.
@@ -67,18 +80,19 @@ def get_data_target_table(study_path, p_nums):
     new_data_gyro = [n for n in data_gyro if np.count_nonzero(np.isnan(n[0]))<(n[0].size/2)]
     new_target_gyro = [target[i] for i in range(len(data_gyro)) if np.count_nonzero(np.isnan(data_gyro[i][0]))<(data_gyro[i][0].size/2)]
 
-    np_data_gyro = np.array(new_data_gyro)
+    # np_data_gyro = np.array(new_data_gyro)
     np_target_gyro = np.array(new_target_gyro)
 
-    np_data_gyro_new = []
-    for i in range(len(np_data_gyro)):
-        data_i = np.array(np_data_gyro[i])
-        np_data_gyro_new.append(data_i[0]+data_i[1]+data_i[2])
-    np_data_gyro_new = np.array(np_data_gyro_new)
+    # np_data_gyro_new = []
+    # for i in range(len(np_data_gyro)):
+    #     data_i = np.array(np_data_gyro[i])
+    #     np_data_gyro_new.append(data_i[0]+data_i[1]+data_i[2])
+    # np_data_gyro_new = np.array(np_data_gyro_new)
 
     print("Hours of data: %.4g" % (float(len(np_target_gyro))/float(60)))
 
-    return np_data_gyro_new, np_target_gyro, df_table_all
+    # return np_data_gyro_new, np_target_gyro, df_table_all
+    return embedding(new_data_gyro), np_target_gyro, df_table_all
 
 
 def save_intensity_coef(df_table_all, study_path):

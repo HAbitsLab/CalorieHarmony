@@ -11,6 +11,20 @@ from time import time
 import joblib
 
 
+
+def embedding(gyro_data):
+    output = []
+    for m in gyro_data:
+        temp = []
+        for n in m:
+            for i in range(int(len(n)/10)):
+                temp2 = np.array(n[i*10:i*10+10])
+                temp.append(np.mean(temp2))
+                temp.append(np.var(temp2))
+        output.append(temp)
+    return np.array(output)
+
+
 def get_data_target_table(study_path, p_nums, model):
     """
     This function goes through each participants' files and generate the testing data needed to test the classification model.
@@ -67,11 +81,11 @@ def get_data_target_table(study_path, p_nums, model):
                         if np.count_nonzero(np.isnan(this_min_gyro[0]))>(this_min_gyro[0].size/2):
                             prediction.append(-1)
                         else:
-                            this_min_gyro_new = []
-                            this_min_gyro_new.append(this_min_gyro[0]+this_min_gyro[1]+this_min_gyro[2])
-                            this_min_gyro_new = np.array(this_min_gyro_new)
-
-                            model_output = model.predict(this_min_gyro_new)
+                            # this_min_gyro_new = []
+                            # this_min_gyro_new.append(this_min_gyro[0]+this_min_gyro[1]+this_min_gyro[2])
+                            # this_min_gyro_new = np.array(this_min_gyro_new)
+                            
+                            model_output = model.predict(embedding([this_min_gyro]))
                             prediction.append(model_output[0])
                                 
                     if len(temp_gyro['rotX'])==0:
@@ -85,18 +99,19 @@ def get_data_target_table(study_path, p_nums, model):
     new_data_gyro = [n for n in data_gyro if np.count_nonzero(np.isnan(n[0]))<(n[0].size/2)]
     new_target_gyro = [target[i] for i in range(len(data_gyro)) if np.count_nonzero(np.isnan(data_gyro[i][0]))<(data_gyro[i][0].size/2)]
 
-    np_data_gyro = np.array(new_data_gyro)
+    # np_data_gyro = np.array(new_data_gyro)
     np_target_gyro = np.array(new_target_gyro)
 
-    np_data_gyro_new = []
-    for i in range(len(np_data_gyro)):
-        data_i = np.array(np_data_gyro[i])
-        np_data_gyro_new.append(data_i[0]+data_i[1]+data_i[2])
-    np_data_gyro_new = np.array(np_data_gyro_new)
+    # np_data_gyro_new = []
+    # for i in range(len(np_data_gyro)):
+    #     data_i = np.array(np_data_gyro[i])
+    #     np_data_gyro_new.append(data_i[0]+data_i[1]+data_i[2])
+    # np_data_gyro_new = np.array(np_data_gyro_new)
 
     df_table_all = pd.concat(tables).reset_index(drop=True)
         
-    return np_data_gyro_new, np_target_gyro, df_table_all
+    # return np_data_gyro_new, np_target_gyro, df_table_all
+    return embedding(new_data_gyro), np_target_gyro, df_table_all
 
 
 def add_estimation(table, study_path):
