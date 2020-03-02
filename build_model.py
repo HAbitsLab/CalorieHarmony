@@ -103,7 +103,7 @@ def save_intensity_coef(df_table_all, study_path):
     regr = linear_model.LinearRegression(fit_intercept=False)
     regr.fit(instensity_reshaped, ainsworth_reshaped - 1.3)
 
-    outf = open(study_path+'intensity_coef.txt', 'a')
+    outf = open(study_path+'/intensity_coef.txt', 'a')
     outf.write('%.4g\n' % regr.coef_) 
     outf.close()
     print("intensity_coef (regression coef) = %.4g" % regr.coef_)

@@ -109,10 +109,10 @@ def add_estimation(table, study_path):
         - study_path -- the path of the study folder
     """
 
-    outf = open(study_path+'intensity_coef.txt', 'r')
-    str_coef = outf.read().split(' ')
+    outf = open(study_path+'/intensity_coef.txt', 'r')
+    str_coef = outf.read().split('\n')
     outf.close()
-    float_coef = [float(n) for n in str_coef]
+    float_coef = [float(n) for n in str_coef if len(n)!=0]
     # intensity_coef = 0.4062
     intensity_coef = np.mean(float_coef)
     print("intensity_coef (regression coef) = %.4g" % intensity_coef)
