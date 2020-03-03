@@ -25,23 +25,21 @@ def embedding(gyro_data):
     return np.array(output)
 
 
-def get_data_target_table(study_path, p_nums, model):
+def get_data_target_table(study_path, participants, model):
     """
     This function goes through each participants' files and generate the testing data needed to test the classification model.
-    It outputs testing data, testing labels, and an aggregated table.
+    It outputs testing data, testing labels, and an aggregated table with model prediction.
     
     Parameters:
         Required:
         - study_path -- the path of the study folder
-        - p_nums -- participant numbers separated by space (eg. "P301 P302 P401")
+        - participants -- list of participant numbers in str (eg. ["P301","P302","P401"])
     """
-
-    participants = p_nums.split(' ') 
 
     data_gyro = []
     target = []
-
     tables = []
+
     for p in participants:
         path_ts = study_path+'/'+p+'/In Lab/'+p+' In Lab Log.csv'
         df_ts = pd.read_csv(path_ts, index_col=None, header=0)
@@ -292,7 +290,7 @@ def plot_results(df_table_all, study_path):
     print("The r2 score for Google Fit is: %.4g" % (r2_score(ainsworth_all_reshaped, y_pred)))
 
 
-def test_and_estimate(study_path,p_nums):
+def test_and_estimate(study_path,participants):
     """
     The build_model.py script needs to be run first to have the model built.
     This function loads the model and test the performance using the input participants' data.
@@ -301,8 +299,10 @@ def test_and_estimate(study_path,p_nums):
     Parameters:
         Required:
         - study_path -- the path of the study folder
-        - p_nums -- participant numbers separated by space (eg. "P301 P302 P401")
+        - participants -- list of participant numbers in str (eg. ["P301","P302","P401"])
     """
+
+    t0 = time()
 
     model = XGBClassifier(learning_rate = 0.01,
                         n_estimators = 400,
@@ -320,7 +320,7 @@ def test_and_estimate(study_path,p_nums):
     model = joblib.load(study_path+'/xgbc.dat')
 
     t0 = time()
-    data, target, table = get_data_target_table(study_path,p_nums,model)
+    data, target, table = get_data_target_table(study_path,participants,model)
     t1 = time()
     print("Preprocessing time (minutes): %.4g" % (float(t1 - t0)/float(60)))
 
@@ -331,6 +331,9 @@ def test_and_estimate(study_path,p_nums):
 
     plot_results(table, study_path)
 
+    t1 = time()
+    print("Total estimate and test time: %.4g minutes" % (float(t1 - t0)/float(60)))
+
 
 
 def main():
@@ -339,7 +342,9 @@ def main():
     # participants# (eg. "P301 P302 P401")
     p_nums = str(sys.argv[2])
 
-    test_and_estimate(study_path,p_nums)
+    participants = p_nums.split(' ') 
+
+    test_and_estimate(study_path,participants)
 
 
 

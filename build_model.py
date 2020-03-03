@@ -21,32 +21,29 @@ def embedding(gyro_data):
     return np.array(output)
 
 
-def get_data_target_table(study_path, p_nums):
+def get_data_target_table(study_path, participants):
     """
     The script preprocessing.py needs to be run first to have the tables generated.
     This function goes through each participants' files and generate the training data needed to build the classification model.
     It outputs training data, training labels, and an aggregated table.
-    It also builds a linear regression that maps the intensity to the Ainsworth METs and record the _coef.
     
     Parameters:
         Required:
         - study_path -- the path of the study folder
-        - p_nums -- participant numbers separated by space (eg. "P301 P302 P401")
+        - participants -- list of participant numbers in str (eg. ["P301","P302","P401"])
     """
-
-    participants = p_nums.split(' ') 
 
     data_gyro = []
     target = []
     tables = []
 
     for p in participants:
+        path_ts = study_path+'/'+p+'/In Lab/'+p+' In Lab Log.csv'
+        df_ts = pd.read_csv(path_ts, index_col=None, header=0)
+
         path_table = study_path+'/'+p+'/In Lab/Summary/Actigraph/'+p+' In Lab IntensityMETActivityLevel.csv'
         df_table = pd.read_csv(path_table, index_col=None, header=0)
         tables.append(df_table)
-
-        path_ts = study_path+'/'+p+'/In Lab/'+p+' In Lab Log.csv'
-        df_ts = pd.read_csv(path_ts, index_col=None, header=0)
         
         path_gyro = study_path+'/'+p+'/In Lab/Wrist/Aggregated/Gyroscope/Gyroscope_resampled.csv'
         df_gyro = pd.read_csv(path_gyro, index_col=None, header=0)
@@ -159,20 +156,38 @@ def build_classification_model(data, target, study_path):
     print("Train Accuracy: %.4g" % metrics.accuracy_score(target, y_pred)) 
 
 
+def build_both_models(study_path,participants):
+    """
+    This function builds the regression model and records the coef, then build and save the classification model.
+    
+    Parameters:
+        Required:
+        - study_path -- the path of the study folder
+        - participants -- list of participant numbers in str (eg. ["P301","P302","P401"])
+    """
+
+    t0 = time()
+
+    data, target, table = get_data_target_table(study_path, participants)
+
+    save_intensity_coef(table, study_path)
+
+    build_classification_model(data, target, study_path)
+
+    t1 = time()
+    print("Total model build time: %.4g minutes" % (float(t1 - t0)/float(60)))
+
+
 def main():
     # path of study folder
     study_path = str(sys.argv[1])
     # participants# (eg. "P301 P302 P401")
     p_nums = str(sys.argv[2])
 
-    t0 = time()
-    data, target, table = get_data_target_table(study_path, p_nums)
-    t1 = time()
-    print("Preprocessing Time (minutes): %.4g" % (float(t1 - t0)/float(60)))
+    participants = p_nums.split(' ')
 
-    save_intensity_coef(table, study_path)
+    build_both_models(study_path,participants)
 
-    build_classification_model(data, target, study_path)
 
 
 
