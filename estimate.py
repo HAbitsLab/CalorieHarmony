@@ -100,6 +100,8 @@ def get_data_target_table(study_path, participants, model):
     # np_data_gyro = np.array(new_data_gyro)
     np_target_gyro = np.array(new_target_gyro)
 
+    print("Hours of data: %g" % (float(len(np_target_gyro))/float(60)))
+
     # np_data_gyro_new = []
     # for i in range(len(np_data_gyro)):
     #     data_i = np.array(np_data_gyro[i])
@@ -126,9 +128,8 @@ def add_estimation(table, study_path):
     str_coef = outf.read().split('\n')
     outf.close()
     float_coef = [float(n) for n in str_coef if len(n)!=0]
-    # intensity_coef = 0.4062
     intensity_coef = np.mean(float_coef)
-    print("intensity_coef (regression coef) = %.4g" % intensity_coef)
+    print("intensity_coef (regression coef) = %g" % intensity_coef)
     table['scaled_intensity'] = table['Watch Intensity']*intensity_coef + 1.3
 
     estimation = []
@@ -219,7 +220,10 @@ def plot_results(df_table_all, study_path):
     # fig.show()
     py.offline.plot(fig, filename=study_path+'/estimation.html')
 
-    print("The r2 score for our estimation is: %.4g" % (r2_score(ainsworth_all_reshaped, y_pred)))
+    outf = open(study_path+'/estimation_r2.txt', 'a')
+    outf.write('%g\n' % r2_score(ainsworth_all_reshaped, y_pred))
+    outf.close()
+    print("The r2 score for our estimation is: %g" % (r2_score(ainsworth_all_reshaped, y_pred)))
 
 
     act_dict = {}
@@ -253,7 +257,10 @@ def plot_results(df_table_all, study_path):
     # fig.show()
     py.offline.plot(fig, filename=study_path+'/actigraphVM3.html')
 
-    print("The r2 score for ActiGraph VM3 is: %.4g" % (r2_score(ainsworth_all_reshaped, y_pred)))
+    outf = open(study_path+'/vm3_r2.txt', 'a')
+    outf.write('%g\n' % r2_score(ainsworth_all_reshaped, y_pred))
+    outf.close()
+    print("The r2 score for ActiGraph VM3 is: %g" % (r2_score(ainsworth_all_reshaped, y_pred)))
 
 
     act_dict = {}
@@ -287,7 +294,10 @@ def plot_results(df_table_all, study_path):
     # fig.show()
     py.offline.plot(fig, filename=study_path+'/googleFit.html')
 
-    print("The r2 score for Google Fit is: %.4g" % (r2_score(ainsworth_all_reshaped, y_pred)))
+    outf = open(study_path+'/google_fit_r2.txt', 'a')
+    outf.write('%g\n' % r2_score(ainsworth_all_reshaped, y_pred)) 
+    outf.close()
+    print("The r2 score for Google Fit is: %g" % (r2_score(ainsworth_all_reshaped, y_pred)))
 
 
 def test_and_estimate(study_path,participants):
@@ -319,20 +329,20 @@ def test_and_estimate(study_path,participants):
 
     model = joblib.load(study_path+'/xgbc.dat')
 
-    t0 = time()
     data, target, table = get_data_target_table(study_path,participants,model)
-    t1 = time()
-    print("Preprocessing time (minutes): %.4g" % (float(t1 - t0)/float(60)))
 
     y_pred = model.predict(data)
-    print("Test Accuracy: %.4g" % metrics.accuracy_score(target, y_pred))
+    outf = open(study_path+'/classification_accuracy.txt', 'a')
+    outf.write('%g\n' % metrics.accuracy_score(target, y_pred))
+    outf.close()
+    print("Test Accuracy: %g" % metrics.accuracy_score(target, y_pred))
 
     add_estimation(table, study_path)
 
     plot_results(table, study_path)
 
     t1 = time()
-    print("Total estimate and test time: %.4g minutes" % (float(t1 - t0)/float(60)))
+    print("Total estimate and test time: %g minutes" % (float(t1 - t0)/float(60)))
 
 
 

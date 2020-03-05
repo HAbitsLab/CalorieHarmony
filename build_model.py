@@ -72,7 +72,7 @@ def get_data_target_table(study_path, participants):
                         
                     start_time += pd.DateOffset(minutes= 1)
 
-    df_table_all = pd.concat(tables).reset_index(drop=True)
+    df_table_all = pd.concat(tables, sort=False).reset_index(drop=True)
 
     new_data_gyro = [n for n in data_gyro if np.count_nonzero(np.isnan(n[0]))<(n[0].size/2)]
     new_target_gyro = [target[i] for i in range(len(data_gyro)) if np.count_nonzero(np.isnan(data_gyro[i][0]))<(data_gyro[i][0].size/2)]
@@ -86,7 +86,7 @@ def get_data_target_table(study_path, participants):
     #     np_data_gyro_new.append(data_i[0]+data_i[1]+data_i[2])
     # np_data_gyro_new = np.array(np_data_gyro_new)
 
-    print("Hours of data: %.4g" % (float(len(np_target_gyro))/float(60)))
+    print("Hours of data: %g" % (float(len(np_target_gyro))/float(60)))
 
     # return np_data_gyro_new, np_target_gyro, df_table_all
     return embedding(new_data_gyro), np_target_gyro, df_table_all
@@ -115,9 +115,9 @@ def save_intensity_coef(df_table_all, study_path):
     regr.fit(instensity_reshaped, ainsworth_reshaped - 1.3)
 
     outf = open(study_path+'/intensity_coef.txt', 'a')
-    outf.write('%.4g\n' % regr.coef_) 
+    outf.write('%g\n' % regr.coef_) 
     outf.close()
-    print("intensity_coef (regression coef) = %.4g" % regr.coef_)
+    print("intensity_coef (regression coef) = %g" % regr.coef_)
 
                     
 def build_classification_model(data, target, study_path):
@@ -148,12 +148,12 @@ def build_classification_model(data, target, study_path):
     t0 = time()
     model.fit(data, target)
     t1 = time()
-    print("Training Time (minutes): %.4g" % (float(t1 - t0)/float(60)))
+    print("Training Time (minutes): %g" % (float(t1 - t0)/float(60)))
 
     joblib.dump(model, study_path+'/xgbc.dat')
 
     y_pred = model.predict(data)
-    print("Train Accuracy: %.4g" % metrics.accuracy_score(target, y_pred)) 
+    print("Train Accuracy: %g" % metrics.accuracy_score(target, y_pred)) 
 
 
 def build_both_models(study_path,participants):
@@ -175,7 +175,7 @@ def build_both_models(study_path,participants):
     build_classification_model(data, target, study_path)
 
     t1 = time()
-    print("Total model build time: %.4g minutes" % (float(t1 - t0)/float(60)))
+    print("Total model build time: %g minutes" % (float(t1 - t0)/float(60)))
 
 
 def main():

@@ -25,10 +25,13 @@ def main():
     participants = p_nums.split(' ')
 
     for p in participants:
-        print('Leaving '+p+' out...')
+        print('\n\nLeaving '+p+' out:')
         leftout = [p]
-        rest = participants.copy().remove(p)
+        rest = participants.copy()
+        rest.remove(p)
+        print('Building:')
         build_both_models(study_path,rest)
+        print('Testing:')
         test_and_estimate(study_path,leftout)
 
     t1 = time()

@@ -147,7 +147,8 @@ def generate_table_wild(study_path, p_num, state):
 
 
 def generate_table_lab(study_path, p_num, state):
-    print('\n\nReading ActiGraph, watch, and timesheet data...')
+    print('\n\nParticipant: '+p_num)
+    print('Reading ActiGraph, watch, and timesheet data...')
     path_acti = study_path + "/" + p_num + "/" + state + "/Actigraph/Clean/" + p_num + ' ' + state + " Freedson.csv"
     path_acti_vm3 = study_path + "/" + p_num + "/" + state + "/Actigraph/Clean/" + p_num + ' ' + state + " VM3.csv"
     path_watch = study_path + "/" + p_num + "/" + state + '/Wrist/Aggregated/Accelerometer/Accelerometer_resampled.csv'
@@ -231,48 +232,48 @@ def generate_table_lab(study_path, p_num, state):
                         index=False, encoding='utf8')
     print('Done')
 
-    print('Writing every minute data into the table...')
-    l_state = []
-    l_participant = []
-    l_intensity = []
-    l_mets_freedson = []
-    l_mets_vm3 = []
-    l_mets_freedson_output = []
-    l_mets_vm3_output = []
-    l_datetime = []
+    # print('Writing every minute data into the table...')
+    # l_state = []
+    # l_participant = []
+    # l_intensity = []
+    # l_mets_freedson = []
+    # l_mets_vm3 = []
+    # l_mets_freedson_output = []
+    # l_mets_vm3_output = []
+    # l_datetime = []
 
-    start_time = pd.to_datetime(df_ts['Trial Start'][0], format='%m/%d/%y %H:%M:%S')
-    # end_time = pd.to_datetime(df_ts['Trial End'][0], format='%m/%d/%y %H:%M:%S')
+    # start_time = pd.to_datetime(df_ts['Trial Start'][0], format='%m/%d/%y %H:%M:%S')
+    # # end_time = pd.to_datetime(df_ts['Trial End'][0], format='%m/%d/%y %H:%M:%S')
 
-    st = pd.to_datetime(df_ts['Trial Start'][0], format='%m/%d/%y %H:%M:%S')
-    et = pd.to_datetime(df_ts['Trial End'][0], format='%m/%d/%y %H:%M:%S')
+    # st = pd.to_datetime(df_ts['Trial Start'][0], format='%m/%d/%y %H:%M:%S')
+    # et = pd.to_datetime(df_ts['Trial End'][0], format='%m/%d/%y %H:%M:%S')
 
-    for i in range(int((et - st).seconds / 60)):
-        l_state.append(state)
-        l_participant.append(p_num)
-        l_intensity.append(get_intensity(df_watch, start_time))
-        l_mets_freedson.append(get_met_freedson(df_acti, start_time))
-        l_mets_vm3.append(get_met_vm3(df_acti, start_time))
-        l_mets_freedson_output.append(get_met_output(df_acti, start_time))
-        l_mets_vm3_output.append(get_met_output(df_acti_vm3, start_time))
-        l_datetime.append(start_time)
-        start_time += pd.DateOffset(minutes=1)
+    # for i in range(int((et - st).seconds / 60)):
+    #     l_state.append(state)
+    #     l_participant.append(p_num)
+    #     l_intensity.append(get_intensity(df_watch, start_time))
+    #     l_mets_freedson.append(get_met_freedson(df_acti, start_time))
+    #     l_mets_vm3.append(get_met_vm3(df_acti, start_time))
+    #     l_mets_freedson_output.append(get_met_output(df_acti, start_time))
+    #     l_mets_vm3_output.append(get_met_output(df_acti_vm3, start_time))
+    #     l_datetime.append(start_time)
+    #     start_time += pd.DateOffset(minutes=1)
 
-    the_table = {'Participant': l_participant, 'State': l_state, 'Datetime': l_datetime, 'Watch Intensity': l_intensity,
-                 'MET (Freedson)': l_mets_freedson, 'MET (VM3)': l_mets_vm3, 
-                 'MET (Freedson output)': l_mets_freedson_output, 'MET (VM3 output)': l_mets_vm3_output}
-    print('Done')
+    # the_table = {'Participant': l_participant, 'State': l_state, 'Datetime': l_datetime, 'Watch Intensity': l_intensity,
+    #              'MET (Freedson)': l_mets_freedson, 'MET (VM3)': l_mets_vm3, 
+    #              'MET (Freedson output)': l_mets_freedson_output, 'MET (VM3 output)': l_mets_vm3_output}
+    # print('Done')
 
-    print('Saving the table...')
-    df_the_table = pd.DataFrame(the_table)
-    df_the_table.to_csv(f"{study_path}/{p_num}/{state}/Summary/Actigraph/{p_num} {state} IntensityMETMinLevel.csv",
-                        index=False, encoding='utf8')
-    print('Done')
+    # print('Saving the table...')
+    # df_the_table = pd.DataFrame(the_table)
+    # df_the_table.to_csv(f"{study_path}/{p_num}/{state}/Summary/Actigraph/{p_num} {state} IntensityMETMinLevel.csv",
+    #                     index=False, encoding='utf8')
+    # print('Done')
 
 
 def main():
     """
-    ActiGraph pipeline needs to be run before it.
+    utility.py needs to be run before it.
     This script generates the tables needed to build the model.
     
     Parameters:
