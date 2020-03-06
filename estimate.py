@@ -2,14 +2,12 @@ import numpy as np
 import pandas as pd
 from xgboost import XGBClassifier
 import sys
-from sklearn import datasets, linear_model, manifold, metrics
-from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.linear_model import LinearRegression
+from sklearn import linear_model, metrics
+from sklearn.metrics import r2_score
 import plotly as py
 import plotly.graph_objects as go
 from time import time
 import joblib
-
 
 
 def embedding(gyro_data):
@@ -17,8 +15,8 @@ def embedding(gyro_data):
     for m in gyro_data:
         temp = []
         for n in m:
-            for i in range(int(len(n)/10)):
-                temp2 = np.array(n[i*10:i*10+10])
+            for i in range(int(len(n) / 10)):
+                temp2 = np.array(n[i * 10:i * 10 + 10])
                 temp.append(np.mean(temp2))
                 temp.append(np.var(temp2))
         output.append(temp)
@@ -27,13 +25,14 @@ def embedding(gyro_data):
 
 def get_data_target_table(study_path, participants, model):
     """
-    This function goes through each participants' files and generate the testing data needed to test the classification model.
+    This function goes through each participants' files
+    and generate the testing data needed to test the classification model.
     It outputs testing data, testing labels, and an aggregated table with model prediction.
     
     Parameters:
-        Required:
-        - study_path -- the path of the study folder
-        - participants -- list of participant numbers in str (eg. ["P301","P302","P401"])
+        :param study_path: the path of the study folder (the folder that contains all participants' folders)
+        :param participants: list of participant numbers in str (eg. ["P301","P302","P401"])
+        :param model: the classification model
     """
 
     data_gyro = []
@@ -41,66 +40,70 @@ def get_data_target_table(study_path, participants, model):
     tables = []
 
     for p in participants:
-        path_ts = study_path+'/'+p+'/In Lab/'+p+' In Lab Log.csv'
+        path_ts = study_path + '/' + p + '/In Lab/' + p + ' In Lab Log.csv'
         df_ts = pd.read_csv(path_ts, index_col=None, header=0)
-        
-        path_gyro = study_path+'/'+p+'/In Lab/Wrist/Aggregated/Gyroscope/Gyroscope_resampled.csv'
-        df_gyro = pd.read_csv(path_gyro, index_col=None, header=0)
-        df_gyro['Datetime'] = pd.to_datetime(df_gyro['Time'], unit='ms', utc=True).dt.tz_convert('America/Chicago').dt.tz_localize(None)
-    
-        sedentary_activities = ['breathing','computer','standing','reading','lie down']
 
-        path_table = study_path+'/'+p+'/In Lab/Summary/Actigraph/'+p+' In Lab IntensityMETActivityLevel.csv'
+        path_gyro = study_path + '/' + p + '/In Lab/Wrist/Aggregated/Gyroscope/Gyroscope_resampled.csv'
+        df_gyro = pd.read_csv(path_gyro, index_col=None, header=0)
+        df_gyro['Datetime'] = pd.to_datetime(df_gyro['Time'], unit='ms', utc=True).dt.tz_convert(
+            'America/Chicago').dt.tz_localize(None)
+
+        sedentary_activities = ['breathing', 'computer', 'standing', 'reading', 'lie down']
+
+        path_table = study_path + '/' + p + '/In Lab/Summary/Actigraph/' + p + ' In Lab IntensityMETActivityLevel.csv'
         df_table = pd.read_csv(path_table, index_col=None, header=0)
-        
+
         prediction = []
-        
+
         for i in range(len(df_ts['Activity'])):
             if not pd.isnull(df_ts['Start Time'][i]):
                 st = pd.to_datetime(df_ts['Start Time'][i], format='%H:%M:%S')
                 et = pd.to_datetime(df_ts['End Time'][i], format='%H:%M:%S')
-                start_time = pd.Timestamp.combine(pd.to_datetime(df_ts['Start Date'][i], format='%m/%d/%y').date(), st.time())
-                for j in range(int((et-st).seconds/60)):
-                    end_time = start_time + pd.DateOffset(minutes= 1)
-                    temp_gyro = df_gyro.loc[(df_gyro['Datetime'] >= start_time) & (df_gyro['Datetime'] < end_time)].reset_index(drop=True)
-                    
+                start_time = pd.Timestamp.combine(pd.to_datetime(df_ts['Start Date'][i], format='%m/%d/%y').date(),
+                                                  st.time())
+                for j in range(int((et - st).seconds / 60)):
+                    end_time = start_time + pd.DateOffset(minutes=1)
+                    temp_gyro = df_gyro.loc[
+                        (df_gyro['Datetime'] >= start_time) & (df_gyro['Datetime'] < end_time)].reset_index(drop=True)
+
                     if df_ts['Activity'][i] in sedentary_activities:
                         target.append(0)
-                        this_min_gyro = [temp_gyro['rotX'],temp_gyro['rotY'],temp_gyro['rotZ']]
-                        data_gyro.append(this_min_gyro)
-                    
-                    if df_ts['Activity'][i] not in sedentary_activities:
-                        target.append(1)
-                        this_min_gyro = [temp_gyro['rotX'],temp_gyro['rotY'],temp_gyro['rotZ']]
+                        this_min_gyro = [temp_gyro['rotX'], temp_gyro['rotY'], temp_gyro['rotZ']]
                         data_gyro.append(this_min_gyro)
 
-                    if len(temp_gyro['rotX'])!=0:
-                        this_min_gyro = [temp_gyro['rotX'],temp_gyro['rotY'],temp_gyro['rotZ']]
-                        if np.count_nonzero(np.isnan(this_min_gyro[0]))>(this_min_gyro[0].size/2):
+                    if df_ts['Activity'][i] not in sedentary_activities:
+                        target.append(1)
+                        this_min_gyro = [temp_gyro['rotX'], temp_gyro['rotY'], temp_gyro['rotZ']]
+                        data_gyro.append(this_min_gyro)
+
+                    if len(temp_gyro['rotX']) != 0:
+                        this_min_gyro = [temp_gyro['rotX'], temp_gyro['rotY'], temp_gyro['rotZ']]
+                        if np.count_nonzero(np.isnan(this_min_gyro[0])) > (this_min_gyro[0].size / 2):
                             prediction.append(-1)
                         else:
                             # this_min_gyro_new = []
                             # this_min_gyro_new.append(this_min_gyro[0]+this_min_gyro[1]+this_min_gyro[2])
                             # this_min_gyro_new = np.array(this_min_gyro_new)
-                            
+
                             model_output = model.predict(embedding([this_min_gyro]))
                             prediction.append(model_output[0])
-                                
-                    if len(temp_gyro['rotX'])==0:
+
+                    if len(temp_gyro['rotX']) == 0:
                         prediction.append(-1)
-                            
-                    start_time += pd.DateOffset(minutes= 1)
-            
+
+                    start_time += pd.DateOffset(minutes=1)
+
         df_table['model_classification'] = prediction
         tables.append(df_table)
 
-    new_data_gyro = [n for n in data_gyro if np.count_nonzero(np.isnan(n[0]))<(n[0].size/2)]
-    new_target_gyro = [target[i] for i in range(len(data_gyro)) if np.count_nonzero(np.isnan(data_gyro[i][0]))<(data_gyro[i][0].size/2)]
+    new_data_gyro = [n for n in data_gyro if np.count_nonzero(np.isnan(n[0])) < (n[0].size / 2)]
+    new_target_gyro = [target[i] for i in range(len(data_gyro)) if
+                       np.count_nonzero(np.isnan(data_gyro[i][0])) < (data_gyro[i][0].size / 2)]
 
     # np_data_gyro = np.array(new_data_gyro)
     np_target_gyro = np.array(new_target_gyro)
 
-    print("Hours of data: %g" % (float(len(np_target_gyro))/float(60)))
+    print("Hours of data: %g" % (float(len(np_target_gyro)) / float(60)))
 
     # np_data_gyro_new = []
     # for i in range(len(np_data_gyro)):
@@ -109,7 +112,7 @@ def get_data_target_table(study_path, participants, model):
     # np_data_gyro_new = np.array(np_data_gyro_new)
 
     df_table_all = pd.concat(tables).reset_index(drop=True)
-        
+
     # return np_data_gyro_new, np_target_gyro, df_table_all
     return embedding(new_data_gyro), np_target_gyro, df_table_all
 
@@ -119,70 +122,67 @@ def add_estimation(table, study_path):
     This function adds the rescaled intensity values and the estimation to the table.
     
     Parameters:
-        Required:
-        - df_table_all -- the aggragated table
-        - study_path -- the path of the study folder
+        :param table: the table
+        :param study_path: the path of the study folder (the folder that contains all participants' folders)
     """
 
-    outf = open(study_path+'/intensity_coef.txt', 'r')
+    outf = open('intensity_coef.txt', 'r')
     str_coef = outf.read().split('\n')
     outf.close()
-    float_coef = [float(n) for n in str_coef if len(n)!=0]
+    float_coef = [float(n) for n in str_coef if len(n) != 0]
     intensity_coef = np.mean(float_coef)
     print("intensity_coef (regression coef) = %g" % intensity_coef)
-    table['scaled_intensity'] = table['Watch Intensity']*intensity_coef + 1.3
+    table['scaled_intensity'] = table['Watch Intensity'] * intensity_coef + 1.3
 
     estimation = []
     for i in range(len(table['model_classification'])):
         c = table['model_classification'][i]
         s = table['scaled_intensity'][i]
-        
-        if c==-1:
-            if s<1.3:
+
+        if c == -1:
+            if s < 1.3:
                 estimation.append(1.3)
             else:
                 estimation.append(s)
-        elif c==0:
-            if s<1.3:
+        elif c == 0:
+            if s < 1.3:
                 estimation.append(1.3)
-            elif s>1.5:
+            elif s > 1.5:
                 estimation.append(1.5)
             else:
                 estimation.append(s)
-        elif c==1:
-            if s<1.5:
+        elif c == 1:
+            if s < 1.5:
                 estimation.append(1.5)
-            elif s>10:
+            elif s > 10:
                 estimation.append(10)
             else:
                 estimation.append(s)
-                
+
     table['estimation'] = estimation
 
 
 def plot_results(df_table_all, study_path):
     """
-    This function takes the values from the table to visulize them.
+    This function takes the values from the table to visualize them.
     It compares the model's estimation, ActiGraph's estimation and Google Fit Estimation to the Ainsworth METs.
     The graphs will be saved under the study folder.
     
     Parameters:
-        Required:
-        - df_table_all -- the aggragated table
-        - study_path -- the path of the study folder
+        :param df_table_all: the aggregated table
+        :param study_path: the path of the study folder (the folder that contains all participants' folders)
     """
 
     l_vm3_all = df_table_all['MET (VM3)'].tolist()
     l_estimation_all = df_table_all['estimation'].tolist()
     l_ainsworth = df_table_all['MET (Ainsworth)'].tolist()
-    l_scaled_intensity = df_table_all['scaled_intensity'].tolist()
     l_google_fit = df_table_all['Google Fit'].tolist()
 
-    l_google_fit = [l_google_fit[i] for i in range(len(l_scaled_intensity)) if not np.isnan(l_scaled_intensity[i])]
-    l_vm3_all = [l_vm3_all[i] for i in range(len(l_scaled_intensity)) if not np.isnan(l_scaled_intensity[i])]
-    l_estimation_all = [l_estimation_all[i] for i in range(len(l_scaled_intensity)) if not np.isnan(l_scaled_intensity[i])]
-    l_ainsworth = [l_ainsworth[i] for i in range(len(l_scaled_intensity)) if not np.isnan(l_scaled_intensity[i])]
-    l_scaled_intensity = [l_scaled_intensity[i] for i in range(len(l_scaled_intensity)) if not np.isnan(l_scaled_intensity[i])]
+    l_google_fit = [l_google_fit[i] for i in range(len(l_estimation_all)) if not np.isnan(l_estimation_all[i])]
+    l_vm3_all = [l_vm3_all[i] for i in range(len(l_estimation_all)) if not np.isnan(l_estimation_all[i])]
+    l_estimation_all = [l_estimation_all[i] for i in range(len(l_estimation_all)) if
+                        not np.isnan(l_estimation_all[i])]
+    l_ainsworth = [l_ainsworth[i] for i in range(len(l_estimation_all)) if not np.isnan(l_estimation_all[i])]
 
     vm3_all_reshaped = np.array(l_vm3_all).reshape(-1, 1)
     estimation_all_reshaped = np.array(l_estimation_all).reshape(-1, 1)
@@ -190,149 +190,144 @@ def plot_results(df_table_all, study_path):
     google_fit_reshaped = np.array(l_google_fit).reshape(-1, 1)
 
     act_dict = {}
-    activities = ['breathing','computer','slow walk','fast walk','standing','squats','reading','aerobics','sweeping','pushups','running','lie down','stairs']
+    activities = ['breathing', 'computer', 'slow walk', 'fast walk', 'standing', 'squats', 'reading', 'aerobics',
+                  'sweeping', 'pushups', 'running', 'lie down', 'stairs']
     for a in activities:
-        act_dict[a] = [[],[]]
+        act_dict[a] = [[], []]
     for i in range(len(df_table_all['Activity'])):
         act_dict[df_table_all['Activity'][i]][0].append(df_table_all['estimation'][i])
         act_dict[df_table_all['Activity'][i]][1].append(df_table_all['MET (Ainsworth)'][i])
-        
-        
+
     regr = linear_model.LinearRegression()
-
     regr.fit(estimation_all_reshaped, ainsworth_all_reshaped)
-
     y_pred = regr.predict(estimation_all_reshaped)
-
 
     fig = go.Figure()
 
     for a in act_dict:
         fig.add_trace(go.Scatter(x=act_dict[a][0], y=act_dict[a][1], mode='markers', name=a))
 
-    y_plot = np.reshape(y_pred,y_pred.shape[0])
-    fig.add_trace(go.Scatter(x=l_estimation_all, y=y_plot, mode='lines', name='linear regression', line=dict(color='red', width=4)))
+    y_plot = np.reshape(y_pred, y_pred.shape[0])
+    fig.add_trace(go.Scatter(x=l_estimation_all, y=y_plot, mode='lines', name='linear regression',
+                             line=dict(color='red', width=4)))
 
     fig.update_layout(title='Linear Regression',
-                    xaxis_title='Estimation',
-                    yaxis_title='Ainsworth METs')
+                      xaxis_title='Estimation',
+                      yaxis_title='Ainsworth METs')
 
     # fig.show()
-    py.offline.plot(fig, filename=study_path+'/estimation.html')
+    py.offline.plot(fig, filename='estimation.html', auto_open=False)
 
-    outf = open(study_path+'/estimation_r2.txt', 'a')
+    outf = open('estimation_r2.txt', 'a')
     outf.write('%g\n' % r2_score(ainsworth_all_reshaped, y_pred))
     outf.close()
     print("The r2 score for our estimation is: %g" % (r2_score(ainsworth_all_reshaped, y_pred)))
 
-
     act_dict = {}
-    activities = ['breathing','computer','slow walk','fast walk','standing','squats','reading','aerobics','sweeping','pushups','running','lie down','stairs']
+    activities = ['breathing', 'computer', 'slow walk', 'fast walk', 'standing', 'squats', 'reading', 'aerobics',
+                  'sweeping', 'pushups', 'running', 'lie down', 'stairs']
     for a in activities:
-        act_dict[a] = [[],[]]
+        act_dict[a] = [[], []]
     for i in range(len(df_table_all['Activity'])):
         act_dict[df_table_all['Activity'][i]][0].append(df_table_all['MET (VM3)'][i])
         act_dict[df_table_all['Activity'][i]][1].append(df_table_all['MET (Ainsworth)'][i])
-        
-        
+
     regr = linear_model.LinearRegression()
 
     regr.fit(vm3_all_reshaped, ainsworth_all_reshaped)
 
     y_pred = regr.predict(vm3_all_reshaped)
 
-
     fig = go.Figure()
 
     for a in act_dict:
         fig.add_trace(go.Scatter(x=act_dict[a][0], y=act_dict[a][1], mode='markers', name=a))
 
-    y_plot = np.reshape(y_pred,y_pred.shape[0])
-    fig.add_trace(go.Scatter(x=l_vm3_all, y=y_plot, mode='lines', name='linear regression', line=dict(color='red', width=4)))
+    y_plot = np.reshape(y_pred, y_pred.shape[0])
+    fig.add_trace(
+        go.Scatter(x=l_vm3_all, y=y_plot, mode='lines', name='linear regression', line=dict(color='red', width=4)))
 
     fig.update_layout(title='Linear Regression',
-                    xaxis_title='VM3 METs',
-                    yaxis_title='Ainsworth METs')
+                      xaxis_title='VM3 METs',
+                      yaxis_title='Ainsworth METs')
 
     # fig.show()
-    py.offline.plot(fig, filename=study_path+'/actigraphVM3.html')
+    py.offline.plot(fig, filename='actigraphVM3.html', auto_open=False)
 
-    outf = open(study_path+'/vm3_r2.txt', 'a')
+    outf = open('vm3_r2.txt', 'a')
     outf.write('%g\n' % r2_score(ainsworth_all_reshaped, y_pred))
     outf.close()
     print("The r2 score for ActiGraph VM3 is: %g" % (r2_score(ainsworth_all_reshaped, y_pred)))
 
-
     act_dict = {}
-    activities = ['breathing','computer','slow walk','fast walk','standing','squats','reading','aerobics','sweeping','pushups','running','lie down','stairs']
+    activities = ['breathing', 'computer', 'slow walk', 'fast walk', 'standing', 'squats', 'reading', 'aerobics',
+                  'sweeping', 'pushups', 'running', 'lie down', 'stairs']
     for a in activities:
-        act_dict[a] = [[],[]]
+        act_dict[a] = [[], []]
     for i in range(len(df_table_all['Activity'])):
         act_dict[df_table_all['Activity'][i]][0].append(df_table_all['Google Fit'][i])
         act_dict[df_table_all['Activity'][i]][1].append(df_table_all['MET (Ainsworth)'][i])
-        
-        
+
     regr = linear_model.LinearRegression()
 
     regr.fit(google_fit_reshaped, ainsworth_all_reshaped)
 
     y_pred = regr.predict(google_fit_reshaped)
 
-
     fig = go.Figure()
 
     for a in act_dict:
         fig.add_trace(go.Scatter(x=act_dict[a][0], y=act_dict[a][1], mode='markers', name=a))
 
-    y_plot = np.reshape(y_pred,y_pred.shape[0])
-    fig.add_trace(go.Scatter(x=l_google_fit, y=y_plot, mode='lines', name='linear regression', line=dict(color='red', width=4)))
+    y_plot = np.reshape(y_pred, y_pred.shape[0])
+    fig.add_trace(
+        go.Scatter(x=l_google_fit, y=y_plot, mode='lines', name='linear regression', line=dict(color='red', width=4)))
 
     fig.update_layout(title='Linear Regression',
-                    xaxis_title='Google Fit Calorie Reading',
-                    yaxis_title='Ainsworth METs')
+                      xaxis_title='Google Fit Calorie Reading',
+                      yaxis_title='Ainsworth METs')
 
     # fig.show()
-    py.offline.plot(fig, filename=study_path+'/googleFit.html')
+    py.offline.plot(fig, filename='googleFit.html', auto_open=False)
 
-    outf = open(study_path+'/google_fit_r2.txt', 'a')
-    outf.write('%g\n' % r2_score(ainsworth_all_reshaped, y_pred)) 
+    outf = open('google_fit_r2.txt', 'a')
+    outf.write('%g\n' % r2_score(ainsworth_all_reshaped, y_pred))
     outf.close()
     print("The r2 score for Google Fit is: %g" % (r2_score(ainsworth_all_reshaped, y_pred)))
 
 
-def test_and_estimate(study_path,participants):
+def test_and_estimate(study_path, participants):
     """
     The build_model.py script needs to be run first to have the model built.
     This function loads the model and test the performance using the input participants' data.
     It estimates the results and plots the comparison graphs.
     
     Parameters:
-        Required:
-        - study_path -- the path of the study folder
-        - participants -- list of participant numbers in str (eg. ["P301","P302","P401"])
+        :param study_path: the path of the study folder (the folder that contains all participants' folders)
+        :param participants: list of participant numbers in str (eg. ["P301","P302","P401"])
     """
 
     t0 = time()
 
-    model = XGBClassifier(learning_rate = 0.01,
-                        n_estimators = 400,
-                        max_depth = 10,
-                        min_child_weight = 1,
-                        gamma = 0,
-                        subsample = 1,
-                        colsample_btree = 1,
-                        scale_pos_weight = 1,
-                        random_state = 7,
-                        slient = 0,
-                        nthread = 4
-                        )
+    model = XGBClassifier(learning_rate=0.01,
+                          n_estimators=400,
+                          max_depth=10,
+                          min_child_weight=1,
+                          gamma=0,
+                          subsample=1,
+                          colsample_btree=1,
+                          scale_pos_weight=1,
+                          random_state=7,
+                          slient=0,
+                          nthread=4
+                          )
 
-    model = joblib.load(study_path+'/xgbc.dat')
+    model = joblib.load('xgbc.dat')
 
-    data, target, table = get_data_target_table(study_path,participants,model)
+    data, target, table = get_data_target_table(study_path, participants, model)
 
     y_pred = model.predict(data)
-    outf = open(study_path+'/classification_accuracy.txt', 'a')
+    outf = open('classification_accuracy.txt', 'a')
     outf.write('%g\n' % metrics.accuracy_score(target, y_pred))
     outf.close()
     print("Test Accuracy: %g" % metrics.accuracy_score(target, y_pred))
@@ -342,8 +337,7 @@ def test_and_estimate(study_path,participants):
     plot_results(table, study_path)
 
     t1 = time()
-    print("Total estimate and test time: %g minutes" % (float(t1 - t0)/float(60)))
-
+    print("Total estimate and test time: %g minutes" % (float(t1 - t0) / float(60)))
 
 
 def main():
@@ -352,10 +346,9 @@ def main():
     # participants# (eg. "P301 P302 P401")
     p_nums = str(sys.argv[2])
 
-    participants = p_nums.split(' ') 
+    participants = p_nums.split(' ')
 
-    test_and_estimate(study_path,participants)
-
+    test_and_estimate(study_path, participants)
 
 
 if __name__ == '__main__':

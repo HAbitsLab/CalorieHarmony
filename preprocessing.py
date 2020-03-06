@@ -2,8 +2,6 @@ import numpy as np
 import pandas as pd
 import os
 import sys
-from datetime import datetime, timedelta
-
 
 
 def watch_add_datetime(watch_df):
@@ -74,16 +72,15 @@ def get_met_output(df_acti, st):
     return output
 
 
-
 def generate_table_wild(study_path, p_num, state):
     print('\n\nReading ActiGraph, watch, and timesheet data...')
-    path_acti = study_path + "/" + p_num + "/" + state + "/Actigraph/Clean/" + p_num + ' ' + state + " Freedson.csv"
+    path_acti_freedson = study_path + "/" + p_num + "/" + state + "/Actigraph/Clean/" + p_num + ' ' + state + " Freedson.csv"
     path_acti_vm3 = study_path + "/" + p_num + "/" + state + "/Actigraph/Clean/" + p_num + ' ' + state + " VM3.csv"
-    path_watch = study_path + "/" + p_num + "/" + state + '/Wrist/Aggregated/Accelerometer/Accelerometer_resampled.csv'
-        
-    df_acti = pd.read_csv(path_acti, index_col=None, header=1)
+    path_accel = study_path + "/" + p_num + "/" + state + '/Wrist/Aggregated/Accelerometer/Accelerometer_resampled.csv'
+
+    df_acti_freedson = pd.read_csv(path_acti_freedson, index_col=None, header=1)
     df_acti_vm3 = pd.read_csv(path_acti_vm3, index_col=None, header=1)
-    df_watch = pd.read_csv(path_watch, index_col=None, header=0)
+    df_accel = pd.read_csv(path_accel, index_col=None, header=0)
     print('Done')
 
     print('Checking if timesheet exists and reading if it does...')
@@ -94,11 +91,10 @@ def generate_table_wild(study_path, p_num, state):
     df_ts = pd.read_csv(path_ts, index_col=None, header=0)
     print('Done')
 
-
     print('Adding datetime info...')
-    actigraph_add_datetime(df_acti)
+    actigraph_add_datetime(df_acti_freedson)
     actigraph_add_datetime(df_acti_vm3)
-    watch_add_datetime(df_watch)
+    watch_add_datetime(df_accel)
     print('Done')
 
     print('Writing every minute data into the table...')
@@ -117,25 +113,25 @@ def generate_table_wild(study_path, p_num, state):
         start_time = pd.Timestamp.combine(pd.to_datetime(df_ts['Start Date'][d], format='%m/%d/%y').date(), st.time())
         for i in range(int((et - st).seconds / 60)):
             end_time = start_time + pd.DateOffset(minutes=1)
-            temp = df_watch.loc[(df_watch['Datetime'] >= start_time) & (df_watch['Datetime'] < end_time)].reset_index(
-                drop=True)
-            temp2 = df_acti.loc[(df_acti['Datetime'] >= start_time) & (df_acti['Datetime'] < end_time)].reset_index(
-                drop=True)
+            temp = df_accel.loc[(df_accel['Datetime'] >= start_time)
+                                & (df_accel['Datetime'] < end_time)].reset_index(drop=True)
+            temp2 = df_acti_freedson.loc[(df_acti_freedson['Datetime'] >= start_time)
+                                         & (df_acti_freedson['Datetime'] < end_time)].reset_index(drop=True)
 
-            if len(temp['Datetime']) > 0:
+            if not pd.isnull(temp['accX']).all():
                 if len(temp2['Datetime']) > 0:
                     l_state.append(state)
                     l_participant.append(p_num)
-                    l_intensity.append(get_intensity(df_watch, start_time))
-                    l_mets_freedson.append(get_met_freedson(df_acti, start_time))
-                    l_mets_vm3.append(get_met_vm3(df_acti, start_time))
-                    l_mets_freedson_output.append(get_met_output(df_acti, start_time))
+                    l_intensity.append(get_intensity(df_accel, start_time))
+                    l_mets_freedson.append(get_met_freedson(df_acti_freedson, start_time))
+                    l_mets_vm3.append(get_met_vm3(df_acti_freedson, start_time))
+                    l_mets_freedson_output.append(get_met_output(df_acti_freedson, start_time))
                     l_mets_vm3_output.append(get_met_output(df_acti_vm3, start_time))
                     l_datetime.append(start_time)
             start_time += pd.DateOffset(minutes=1)
 
     the_table = {'Participant': l_participant, 'State': l_state, 'Datetime': l_datetime, 'Watch Intensity': l_intensity,
-                 'MET (Freedson)': l_mets_freedson, 'MET (VM3)': l_mets_vm3, 
+                 'MET (Freedson)': l_mets_freedson, 'MET (VM3)': l_mets_vm3,
                  'MET (Freedson output)': l_mets_freedson_output, 'MET (VM3 output)': l_mets_vm3_output}
     print('Done')
 
@@ -147,15 +143,15 @@ def generate_table_wild(study_path, p_num, state):
 
 
 def generate_table_lab(study_path, p_num, state):
-    print('\n\nParticipant: '+p_num)
+    print('\n\nParticipant: ' + p_num)
     print('Reading ActiGraph, watch, and timesheet data...')
-    path_acti = study_path + "/" + p_num + "/" + state + "/Actigraph/Clean/" + p_num + ' ' + state + " Freedson.csv"
+    path_acti_freedson = study_path + "/" + p_num + "/" + state + "/Actigraph/Clean/" + p_num + ' ' + state + " Freedson.csv"
     path_acti_vm3 = study_path + "/" + p_num + "/" + state + "/Actigraph/Clean/" + p_num + ' ' + state + " VM3.csv"
-    path_watch = study_path + "/" + p_num + "/" + state + '/Wrist/Aggregated/Accelerometer/Accelerometer_resampled.csv'
-        
-    df_acti = pd.read_csv(path_acti, index_col=None, header=1)
+    path_accel = study_path + "/" + p_num + "/" + state + '/Wrist/Aggregated/Accelerometer/Accelerometer_resampled.csv'
+
+    df_acti_freedson = pd.read_csv(path_acti_freedson, index_col=None, header=1)
     df_acti_vm3 = pd.read_csv(path_acti_vm3, index_col=None, header=1)
-    df_watch = pd.read_csv(path_watch, index_col=None, header=0)
+    df_accel = pd.read_csv(path_accel, index_col=None, header=0)
     print('Done')
 
     print('Checking if timesheet exists and reading if it does...')
@@ -166,28 +162,16 @@ def generate_table_lab(study_path, p_num, state):
     df_ts = pd.read_csv(path_ts, index_col=None, header=0)
     print('Done')
 
-
     print('Adding datetime info...')
-    actigraph_add_datetime(df_acti)
+    actigraph_add_datetime(df_acti_freedson)
     actigraph_add_datetime(df_acti_vm3)
-    watch_add_datetime(df_watch)
+    watch_add_datetime(df_accel)
     print('Done')
 
     print('Generating The Table...')
-    d_mets = {}
-    d_mets['breathing']=1.3
-    d_mets['computer']=1.3
-    d_mets['reading']=1.3
-    d_mets['lie down']=1.3
-    d_mets['standing']=1.8
-    d_mets['sweeping']=2.3
-    d_mets['slow walk']=2.8
-    d_mets['pushups']=3.8
-    d_mets['fast walk']=4.3
-    d_mets['squats']=5
-    d_mets['running']=6
-    d_mets['aerobics']=7.3
-    d_mets['stairs']=8
+    d_mets = {'breathing': 1.3, 'computer': 1.3, 'reading': 1.3, 'lie down': 1.3, 'standing': 1.8, 'sweeping': 2.3,
+              'slow walk': 2.8, 'pushups': 3.8, 'fast walk': 4.3, 'squats': 5, 'running': 6, 'aerobics': 7.3,
+              'stairs': 8}
 
     l_activity = []
     l_minute = []
@@ -215,71 +199,28 @@ def generate_table_lab(study_path, p_num, state):
                 l_participant.append(p_num)
                 l_mets_ainsworth.append(d_mets[df_ts['Activity'][i]])
                 l_fit.append((df_ts['End Calorie'][i] - df_ts['Start Calorie'][i]) / 5)
-                l_intensity.append(get_intensity(df_watch, start_time))
-                l_mets_freedson.append(get_met_freedson(df_acti, start_time))
-                l_mets_vm3.append(get_met_vm3(df_acti, start_time))
-                l_mets_freedson_output.append(get_met_output(df_acti, start_time))
+                l_intensity.append(get_intensity(df_accel, start_time))
+                l_mets_freedson.append(get_met_freedson(df_acti_freedson, start_time))
+                l_mets_vm3.append(get_met_vm3(df_acti_freedson, start_time))
+                l_mets_freedson_output.append(get_met_output(df_acti_freedson, start_time))
                 l_mets_vm3_output.append(get_met_output(df_acti_vm3, start_time))
                 l_datetime.append(start_time)
                 start_time += pd.DateOffset(minutes=1)
 
     the_table = {'Participant': l_participant, 'State': l_state, 'Activity': l_activity, 'Minute': l_minute,
                  'Google Fit': l_fit, 'Datetime': l_datetime, 'Watch Intensity': l_intensity,
-                 'MET (Ainsworth)': l_mets_ainsworth, 'MET (Freedson)': l_mets_freedson, 'MET (VM3)': l_mets_vm3, 
+                 'MET (Ainsworth)': l_mets_ainsworth, 'MET (Freedson)': l_mets_freedson, 'MET (VM3)': l_mets_vm3,
                  'MET (Freedson output)': l_mets_freedson_output, 'MET (VM3 output)': l_mets_vm3_output}
     df_the_table = pd.DataFrame(the_table)
     df_the_table.to_csv(f"{study_path}/{p_num}/{state}/Summary/Actigraph/{p_num} {state} IntensityMETActivityLevel.csv",
                         index=False, encoding='utf8')
     print('Done')
 
-    # print('Writing every minute data into the table...')
-    # l_state = []
-    # l_participant = []
-    # l_intensity = []
-    # l_mets_freedson = []
-    # l_mets_vm3 = []
-    # l_mets_freedson_output = []
-    # l_mets_vm3_output = []
-    # l_datetime = []
-
-    # start_time = pd.to_datetime(df_ts['Trial Start'][0], format='%m/%d/%y %H:%M:%S')
-    # # end_time = pd.to_datetime(df_ts['Trial End'][0], format='%m/%d/%y %H:%M:%S')
-
-    # st = pd.to_datetime(df_ts['Trial Start'][0], format='%m/%d/%y %H:%M:%S')
-    # et = pd.to_datetime(df_ts['Trial End'][0], format='%m/%d/%y %H:%M:%S')
-
-    # for i in range(int((et - st).seconds / 60)):
-    #     l_state.append(state)
-    #     l_participant.append(p_num)
-    #     l_intensity.append(get_intensity(df_watch, start_time))
-    #     l_mets_freedson.append(get_met_freedson(df_acti, start_time))
-    #     l_mets_vm3.append(get_met_vm3(df_acti, start_time))
-    #     l_mets_freedson_output.append(get_met_output(df_acti, start_time))
-    #     l_mets_vm3_output.append(get_met_output(df_acti_vm3, start_time))
-    #     l_datetime.append(start_time)
-    #     start_time += pd.DateOffset(minutes=1)
-
-    # the_table = {'Participant': l_participant, 'State': l_state, 'Datetime': l_datetime, 'Watch Intensity': l_intensity,
-    #              'MET (Freedson)': l_mets_freedson, 'MET (VM3)': l_mets_vm3, 
-    #              'MET (Freedson output)': l_mets_freedson_output, 'MET (VM3 output)': l_mets_vm3_output}
-    # print('Done')
-
-    # print('Saving the table...')
-    # df_the_table = pd.DataFrame(the_table)
-    # df_the_table.to_csv(f"{study_path}/{p_num}/{state}/Summary/Actigraph/{p_num} {state} IntensityMETMinLevel.csv",
-    #                     index=False, encoding='utf8')
-    # print('Done')
-
 
 def main():
     """
     utility.py needs to be run before it.
     This script generates the tables needed to build the model.
-    
-    Parameters:
-        Required:
-        - study_path -- the path of the study folder
-        - p_nums -- participant numbers separated by space (eg. "P301 P302 P401")
     """
 
     # path of study folder
