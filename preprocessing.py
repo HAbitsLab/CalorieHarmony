@@ -65,11 +65,8 @@ def get_met_vm3(df_acti, st):
     return met
 
 
-def get_met_output(df_acti, st):
-    et = st + pd.DateOffset(minutes=1)
-    temp = df_acti.loc[(df_acti['Datetime'] >= st) & (df_acti['Datetime'] < et)].reset_index(drop=True)
-    output = temp['MET rate'][0]
-    return output
+def cal_to_met(cal, weight):
+    return cal * 200 / weight / 3.5
 
 
 def generate_table_wild(study_path, p_num, state):
@@ -103,8 +100,6 @@ def generate_table_wild(study_path, p_num, state):
     l_intensity = []
     l_mets_freedson = []
     l_mets_vm3 = []
-    l_mets_freedson_output = []
-    l_mets_vm3_output = []
     l_datetime = []
 
     for d in range(len(df_ts['Day'])):
@@ -125,14 +120,11 @@ def generate_table_wild(study_path, p_num, state):
                     l_intensity.append(get_intensity(df_accel, start_time))
                     l_mets_freedson.append(get_met_freedson(df_acti_freedson, start_time))
                     l_mets_vm3.append(get_met_vm3(df_acti_freedson, start_time))
-                    l_mets_freedson_output.append(get_met_output(df_acti_freedson, start_time))
-                    l_mets_vm3_output.append(get_met_output(df_acti_vm3, start_time))
                     l_datetime.append(start_time)
             start_time += pd.DateOffset(minutes=1)
 
     the_table = {'Participant': l_participant, 'State': l_state, 'Datetime': l_datetime, 'Watch Intensity': l_intensity,
-                 'MET (Freedson)': l_mets_freedson, 'MET (VM3)': l_mets_vm3,
-                 'MET (Freedson output)': l_mets_freedson_output, 'MET (VM3 output)': l_mets_vm3_output}
+                 'MET (Freedson)': l_mets_freedson, 'MET (VM3)': l_mets_vm3}
     print('Done')
 
     print('Saving the table...')
@@ -169,7 +161,7 @@ def generate_table_lab(study_path, p_num, state):
     print('Done')
 
     print('Generating The Table...')
-    d_mets = {'breathing': 1.3, 'computer': 1.3, 'reading': 1.3, 'lie down': 1.3, 'standing': 1.8, 'sweeping': 2.3,
+    d_mets = {'breathing': 1, 'computer': 1.3, 'reading': 1.3, 'lie down': 1.3, 'standing': 1.8, 'sweeping': 2.3,
               'slow walk': 2.8, 'pushups': 3.8, 'fast walk': 4.3, 'squats': 5, 'running': 6, 'aerobics': 7.3,
               'stairs': 8}
 
@@ -182,9 +174,10 @@ def generate_table_lab(study_path, p_num, state):
     l_fit = []
     l_mets_freedson = []
     l_mets_vm3 = []
-    l_mets_freedson_output = []
-    l_mets_vm3_output = []
     l_datetime = []
+
+    path_weights = study_path + "/p_weights.csv"
+    df_weights = pd.read_csv(path_weights)
 
     for i in range(len(df_ts['Activity'])):
         if not pd.isnull(df_ts['Start Time'][i]):
@@ -198,19 +191,19 @@ def generate_table_lab(study_path, p_num, state):
                 l_state.append(df_ts['State'][i])
                 l_participant.append(p_num)
                 l_mets_ainsworth.append(d_mets[df_ts['Activity'][i]])
-                l_fit.append((df_ts['End Calorie'][i] - df_ts['Start Calorie'][i]) / 5)
+                cal = (df_ts['End Calorie'][i] - df_ts['Start Calorie'][i]) / 5
+                temp = df_weights.loc[df_weights['Participant'] == p_num].reset_index()
+                weight = temp['Weight (kg)'][0]
+                l_fit.append(cal_to_met(cal, weight))
                 l_intensity.append(get_intensity(df_accel, start_time))
                 l_mets_freedson.append(get_met_freedson(df_acti_freedson, start_time))
                 l_mets_vm3.append(get_met_vm3(df_acti_freedson, start_time))
-                l_mets_freedson_output.append(get_met_output(df_acti_freedson, start_time))
-                l_mets_vm3_output.append(get_met_output(df_acti_vm3, start_time))
                 l_datetime.append(start_time)
                 start_time += pd.DateOffset(minutes=1)
 
     the_table = {'Participant': l_participant, 'State': l_state, 'Activity': l_activity, 'Minute': l_minute,
-                 'Google Fit': l_fit, 'Datetime': l_datetime, 'Watch Intensity': l_intensity,
-                 'MET (Ainsworth)': l_mets_ainsworth, 'MET (Freedson)': l_mets_freedson, 'MET (VM3)': l_mets_vm3,
-                 'MET (Freedson output)': l_mets_freedson_output, 'MET (VM3 output)': l_mets_vm3_output}
+                 'MET (Google Fit)': l_fit, 'Datetime': l_datetime, 'Watch Intensity': l_intensity,
+                 'MET (Ainsworth)': l_mets_ainsworth, 'MET (Freedson)': l_mets_freedson, 'MET (VM3)': l_mets_vm3}
     df_the_table = pd.DataFrame(the_table)
     df_the_table.to_csv(f"{study_path}/{p_num}/{state}/Summary/Actigraph/{p_num} {state} IntensityMETActivityLevel.csv",
                         index=False, encoding='utf8')

@@ -1,7 +1,7 @@
 import sys
 from time import time
 from build_model import build_both_models
-from estimate import test_and_estimate
+from estimate_and_plot import test_and_estimate
 import os
 
 
@@ -30,6 +30,14 @@ def main():
         print('Testing:')
         test_and_estimate(study_path, leftout)
         os.chdir(current_dir)
+
+    print('\n\nUsing all:')
+    save_folder = os.path.join(os.getcwd(), 'output_files', 'using_all')
+    if not os.path.exists(save_folder):
+        os.makedirs(save_folder)
+    os.chdir(save_folder)
+    print('Building:')
+    build_both_models(study_path, participants)
 
     t1 = time()
     print("Total CV Time: %.4g minutes" % (float(t1 - t0)/float(60)))

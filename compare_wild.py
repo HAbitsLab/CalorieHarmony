@@ -9,94 +9,133 @@ import plotly as py
 import plotly.graph_objects as go
 from time import time
 import joblib
-from estimate import embedding, add_estimation
+from estimate_and_plot import extract_features, add_estimation
 
 
 def main():
     # path of study folder
     study_path = str(sys.argv[1])
-    # participant# (eg. "P301")
-    p = str(sys.argv[2])
+    # participants# (eg. "P301 P302 P401")
+    p_nums = str(sys.argv[2])
 
     t0 = time()
 
-    save_folder = os.path.join(os.getcwd(), 'output_files', 'leave_' + p + '_out')
-    os.chdir(save_folder)
+    participants = p_nums.split(' ')
 
-    model = XGBClassifier(learning_rate=0.01,
-                          n_estimators=400,
-                          max_depth=10,
-                          min_child_weight=1,
-                          gamma=0,
-                          subsample=1,
-                          colsample_btree=1,
-                          scale_pos_weight=1,
-                          random_state=7,
-                          slient=0,
-                          nthread=4
-                          )
-    model = joblib.load('xgbc.dat')
-
-    path_table = study_path + '/' + p + '/In Wild/Summary/Actigraph/' + p + ' In Wild IntensityMETMinLevel.csv'
-    df_table = pd.read_csv(path_table, index_col=None, header=0)
-
-    path_gyro = study_path + '/' + p + '/In Wild/Wrist/Aggregated/Gyroscope/Gyroscope_resampled.csv'
-    df_gyro = pd.read_csv(path_gyro, index_col=None, header=0)
-    df_gyro['Datetime'] = pd.to_datetime(df_gyro['Time'], unit='ms', utc=True).dt.tz_convert(
-        'America/Chicago').dt.tz_localize(None)
-
-    prediction = []
-    for n in df_table['Datetime']:
-        start_time = pd.to_datetime(n)
-        end_time = start_time + pd.DateOffset(minutes=1)
-        temp_gyro = df_gyro.loc[(df_gyro['Datetime'] >= start_time)
-                                & (df_gyro['Datetime'] < end_time)].reset_index(drop=True)
-        if len(temp_gyro['rotX']) == 1200:
-            this_min_gyro = [temp_gyro['rotX'], temp_gyro['rotY'], temp_gyro['rotZ']]
-            if np.count_nonzero(np.isnan(this_min_gyro[0])) > (this_min_gyro[0].size / 2):
-                prediction.append(-1)
-            else:
-                model_output = model.predict(embedding([this_min_gyro]))
-                prediction.append(model_output[0])
+    for p in participants:
+        print('Comparing in wild for '+p)
+        current_dir = os.getcwd()
+        save_folder = os.path.join(os.getcwd(), 'output_files', 'leave_' + p + '_out')
+        if os.path.exists(save_folder):
+            os.chdir(save_folder)
         else:
-            prediction.append(-1)
+            os.chdir(os.path.join(os.getcwd(), 'output_files', 'using_all'))
 
-    df_table['model_classification'] = prediction
+        model = XGBClassifier(learning_rate=0.01,
+                              n_estimators=400,
+                              max_depth=10,
+                              min_child_weight=1,
+                              gamma=0,
+                              subsample=1,
+                              colsample_btree=1,
+                              scale_pos_weight=1,
+                              random_state=7,
+                              slient=0,
+                              nthread=4
+                              )
+        model = joblib.load('xgbc.dat')
 
-    print("Hours of data: %g" % (float(len(df_table)) / float(60)))
+        path_table = study_path + '/' + p + '/In Wild/Summary/Actigraph/' + p + ' In Wild IntensityMETMinLevel.csv'
+        df_table = pd.read_csv(path_table, index_col=None, header=0)
 
-    add_estimation(df_table, study_path)
-    df_table.to_csv('in_wild_comparison.csv', index=False, encoding='utf8')
+        path_gyro = study_path + '/' + p + '/In Wild/Wrist/Aggregated/Gyroscope/Gyroscope_resampled.csv'
+        df_gyro = pd.read_csv(path_gyro, index_col=None, header=0)
+        df_gyro['Datetime'] = pd.to_datetime(df_gyro['Time'], unit='ms', utc=True).dt.tz_convert(
+            'America/Chicago').dt.tz_localize(None)
 
-    l_vm3_all = df_table['MET (VM3)'].tolist()
-    l_estimation_all = df_table['estimation'].tolist()
-    l_vm3_all = [l_vm3_all[i] for i in range(len(l_estimation_all)) if not np.isnan(l_estimation_all[i])]
-    l_estimation_all = [l_estimation_all[i] for i in range(len(l_estimation_all)) if
-                        not np.isnan(l_estimation_all[i])]
-    vm3_all_reshaped = np.array(l_vm3_all).reshape(-1, 1)
-    estimation_all_reshaped = np.array(l_estimation_all).reshape(-1, 1)
+        prediction = []
+        for n in df_table['Datetime']:
+            start_time = pd.to_datetime(n)
+            end_time = start_time + pd.DateOffset(minutes=1)
+            temp_gyro = df_gyro.loc[(df_gyro['Datetime'] >= start_time)
+                                    & (df_gyro['Datetime'] < end_time)].reset_index(drop=True)
+            if len(temp_gyro['rotX']) == 1200:
+                this_min_gyro = [temp_gyro['rotX'], temp_gyro['rotY'], temp_gyro['rotZ']]
+                if np.count_nonzero(np.isnan(this_min_gyro[0])) > 4:
+                    prediction.append(-1)
+                else:
+                    model_output = model.predict(extract_features([this_min_gyro]))
+                    prediction.append(model_output[0])
+            else:
+                prediction.append(-1)
 
-    regr = linear_model.LinearRegression()
-    regr.fit(estimation_all_reshaped, vm3_all_reshaped)
-    y_pred = regr.predict(estimation_all_reshaped)
+        df_table['model_classification'] = prediction
 
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=l_estimation_all, y=l_vm3_all, mode='markers'))
+        print("Hours of data: %g" % (float(len(df_table)) / float(60)))
 
-    y_plot = np.reshape(y_pred, y_pred.shape[0])
-    fig.add_trace(go.Scatter(x=l_estimation_all, y=y_plot, mode='lines', name='linear regression',
-                             line=dict(color='red', width=4)))
+        add_estimation(df_table, study_path)
+        df_table.to_csv(p+'_in_wild_comparison.csv', index=False, encoding='utf8')
 
-    fig.update_layout(title='Linear Regression',
-                      xaxis_title='Estimation',
-                      yaxis_title='VM3 METs')
+        l_datetime_all = df_table['Datetime'].tolist()
+        l_freedson_all = df_table['MET (Freedson)'].tolist()
+        l_vm3_all = df_table['MET (VM3)'].tolist()
+        l_estimation_all = df_table['estimation'].tolist()
+        l_freedson_all = [l_freedson_all[i] for i in range(len(l_estimation_all)) if not np.isnan(l_estimation_all[i])]
+        l_vm3_all = [l_vm3_all[i] for i in range(len(l_estimation_all)) if not np.isnan(l_estimation_all[i])]
+        l_estimation_all = [l_estimation_all[i] for i in range(len(l_estimation_all)) if
+                            not np.isnan(l_estimation_all[i])]
+        l_datetime_all = [l_datetime_all[i] for i in range(len(l_estimation_all)) if not np.isnan(l_estimation_all[i])]
+        vm3_all_reshaped = np.array(l_vm3_all).reshape(-1, 1)
+        estimation_all_reshaped = np.array(l_estimation_all).reshape(-1, 1)
+        freedson_all_reshaped = np.array(l_freedson_all).reshape(-1, 1)
 
-    py.offline.plot(fig, filename='in_wild_comparison.html', auto_open=False)
 
-    outf = open('wild_est_vs_vm3_r2.txt', 'a')
-    outf.write('%g\n' % r2_score(vm3_all_reshaped, y_pred))
-    outf.close()
-    print("The r2 score for in wild estimation vs VM3 is: %g" % (r2_score(vm3_all_reshaped, y_pred)))
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=l_estimation_all, y=l_vm3_all, mode='markers'))
+        regr = linear_model.LinearRegression()
+        regr.fit(estimation_all_reshaped, vm3_all_reshaped)
+        y_pred = regr.predict(estimation_all_reshaped)
+        y_plot = np.reshape(y_pred, y_pred.shape[0])
+        fig.add_trace(go.Scatter(x=l_estimation_all, y=y_plot, mode='lines', name='linear regression',
+                                 line=dict(color='red', width=4)))
+        fig.update_layout(title='Linear Regression',
+                          xaxis_title='Estimation',
+                          yaxis_title='VM3 METs')
+        outf = open('wild_est_vs_vm3_r2.txt', 'a')
+        outf.write('%g\n' % r2_score(vm3_all_reshaped, y_pred))
+        outf.close()
+        print("The r2 score for in wild estimation vs VM3 is: %g" % (r2_score(vm3_all_reshaped, y_pred)))
+        py.offline.plot(fig, filename='in_wild_model_to_vm3.html', auto_open=False)
+
+
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=l_estimation_all, y=l_freedson_all, mode='markers'))
+        regr = linear_model.LinearRegression()
+        regr.fit(estimation_all_reshaped, freedson_all_reshaped)
+        y_pred = regr.predict(estimation_all_reshaped)
+        y_plot = np.reshape(y_pred, y_pred.shape[0])
+        fig.add_trace(go.Scatter(x=l_estimation_all, y=y_plot, mode='lines', name='linear regression',
+                                 line=dict(color='red', width=4)))
+        fig.update_layout(title='Linear Regression',
+                          xaxis_title='Estimation',
+                          yaxis_title='Freedson METs')
+        outf = open('wild_est_vs_freedson_r2.txt', 'a')
+        outf.write('%g\n' % r2_score(freedson_all_reshaped, y_pred))
+        outf.close()
+        print("The r2 score for in wild estimation vs Freedson is: %g" % (r2_score(freedson_all_reshaped, y_pred)))
+        py.offline.plot(fig, filename='in_wild_model_to_freedson.html', auto_open=False)
+
+
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=l_datetime_all, y=l_estimation_all, mode='markers', name='model estimation'))
+        fig.add_trace(go.Scatter(x=l_datetime_all, y=l_vm3_all, mode='markers', name='actigraph vm3'))
+        fig.add_trace(go.Scatter(x=l_datetime_all, y=l_freedson_all, mode='markers', name='actigraph freedson'))
+        fig.update_layout(title='Model and ActiGraph Estimation',
+                          xaxis_title='Datetime',
+                          yaxis_title='MET')
+        py.offline.plot(fig, filename='in_wild_comparison.html', auto_open=False)
+
+        os.chdir(current_dir)
 
     t1 = time()
     print("Total in wild comparison time: %g minutes" % (float(t1 - t0) / float(60)))

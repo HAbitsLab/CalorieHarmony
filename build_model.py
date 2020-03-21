@@ -8,7 +8,7 @@ from time import time
 import joblib
 
 
-def embedding(gyro_data):
+def extract_features(gyro_data):
     output = []
     for m in gyro_data:
         temp = []
@@ -50,7 +50,7 @@ def get_data_target_table(study_path, participants):
         df_gyro['Datetime'] = pd.to_datetime(df_gyro['Time'], unit='ms', utc=True).dt.tz_convert(
             'America/Chicago').dt.tz_localize(None)
 
-        sedentary_activities = ['breathing', 'computer', 'standing', 'reading', 'lie down']
+        sedentary_activities = ['breathing', 'computer', 'reading', 'lie down']
 
         for i in range(len(df_ts['Activity'])):
             if not pd.isnull(df_ts['Start Time'][i]):
@@ -77,9 +77,9 @@ def get_data_target_table(study_path, participants):
 
     df_table_all = pd.concat(tables, sort=False).reset_index(drop=True)
 
-    new_data_gyro = [n for n in data_gyro if np.count_nonzero(np.isnan(n[0])) < (n[0].size / 2)]
+    new_data_gyro = [n for n in data_gyro if np.count_nonzero(np.isnan(n[0])) < 4]
     new_target_gyro = [target[i] for i in range(len(data_gyro)) if
-                       np.count_nonzero(np.isnan(data_gyro[i][0])) < (data_gyro[i][0].size / 2)]
+                       np.count_nonzero(np.isnan(data_gyro[i][0])) < 4]
 
     # np_data_gyro = np.array(new_data_gyro)
     np_target_gyro = np.array(new_target_gyro)
@@ -93,13 +93,13 @@ def get_data_target_table(study_path, participants):
     print("Hours of data: %g" % (float(len(np_target_gyro)) / float(60)))
 
     # return np_data_gyro_new, np_target_gyro, df_table_all
-    return embedding(new_data_gyro), np_target_gyro, df_table_all
+    return extract_features(new_data_gyro), np_target_gyro, df_table_all
 
 
 def save_intensity_coef(df_table_all, study_path):
     """
     This function takes the aggregated table and build a linear regression model.
-    The _coef is saved in a txt file for estimate.py to use.
+    The _coef is saved in a txt file for estimate_and_plot.py to use.
     
     Parameters:
         :param df_table_all: the aggregated table
