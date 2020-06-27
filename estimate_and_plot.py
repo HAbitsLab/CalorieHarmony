@@ -159,10 +159,14 @@ def plot_results(df_table_all, study_path):
                         not np.isnan(l_estimation_all[i])]
     l_ainsworth = [l_ainsworth[i] for i in range(len(l_estimation_all)) if not np.isnan(l_estimation_all[i])]
 
+    l_google_fit = [l_google_fit[i] for i in range(len(l_google_fit)) if l_google_fit[i] >= 0]
+    l_ainsworth_gf = [l_ainsworth[i] for i in range(len(l_google_fit)) if l_google_fit[i] >= 0]
+
     vm3_all_reshaped = np.array(l_vm3_all).reshape(-1, 1)
     estimation_all_reshaped = np.array(l_estimation_all).reshape(-1, 1)
     ainsworth_all_reshaped = np.array(l_ainsworth).reshape(-1, 1)
     google_fit_reshaped = np.array(l_google_fit).reshape(-1, 1)
+    ainsworth_all_reshaped_gf = np.array(l_ainsworth_gf).reshape(-1, 1)
 
     act_dict = {}
     activities = ['breathing', 'computer', 'slow walk', 'fast walk', 'standing', 'squats', 'reading', 'aerobics',
@@ -176,23 +180,17 @@ def plot_results(df_table_all, study_path):
     regr = linear_model.LinearRegression()
     regr.fit(estimation_all_reshaped, ainsworth_all_reshaped)
     y_pred = regr.predict(estimation_all_reshaped)
-
     fig = go.Figure()
-
     for a in act_dict:
         fig.add_trace(go.Scatter(x=act_dict[a][0], y=act_dict[a][1], mode='markers', name=a))
 
     y_plot = np.reshape(y_pred, y_pred.shape[0])
     fig.add_trace(go.Scatter(x=l_estimation_all, y=y_plot, mode='lines', name='linear regression',
                              line=dict(color='red', width=4)))
-
     fig.update_layout(title='Linear Regression',
                       xaxis_title='Estimation',
                       yaxis_title='Ainsworth METs')
-
-    # fig.show()
     py.offline.plot(fig, filename='LR_estimation.html', auto_open=False)
-
     outf = open('r2_estimation.txt', 'a')
     outf.write('%g\n' % r2_score(ainsworth_all_reshaped, y_pred))
     outf.close()
@@ -208,27 +206,18 @@ def plot_results(df_table_all, study_path):
         act_dict[df_table_all['Activity'][i]][1].append(df_table_all['MET (Ainsworth)'][i])
 
     regr = linear_model.LinearRegression()
-
     regr.fit(vm3_all_reshaped, ainsworth_all_reshaped)
-
     y_pred = regr.predict(vm3_all_reshaped)
-
     fig = go.Figure()
-
     for a in act_dict:
         fig.add_trace(go.Scatter(x=act_dict[a][0], y=act_dict[a][1], mode='markers', name=a))
-
     y_plot = np.reshape(y_pred, y_pred.shape[0])
     fig.add_trace(
         go.Scatter(x=l_vm3_all, y=y_plot, mode='lines', name='linear regression', line=dict(color='red', width=4)))
-
     fig.update_layout(title='Linear Regression',
                       xaxis_title='VM3 METs',
                       yaxis_title='Ainsworth METs')
-
-    # fig.show()
     py.offline.plot(fig, filename='LR_vm3.html', auto_open=False)
-
     outf = open('r2_vm3.txt', 'a')
     outf.write('%g\n' % r2_score(ainsworth_all_reshaped, y_pred))
     outf.close()
@@ -244,31 +233,49 @@ def plot_results(df_table_all, study_path):
         act_dict[df_table_all['Activity'][i]][1].append(df_table_all['MET (Ainsworth)'][i])
 
     regr = linear_model.LinearRegression()
-
-    regr.fit(google_fit_reshaped, ainsworth_all_reshaped)
-
+    regr.fit(google_fit_reshaped, ainsworth_all_reshaped_gf)
     y_pred = regr.predict(google_fit_reshaped)
-
     fig = go.Figure()
-
     for a in act_dict:
         fig.add_trace(go.Scatter(x=act_dict[a][0], y=act_dict[a][1], mode='markers', name=a))
-
     y_plot = np.reshape(y_pred, y_pred.shape[0])
     fig.add_trace(
         go.Scatter(x=l_google_fit, y=y_plot, mode='lines', name='linear regression', line=dict(color='red', width=4)))
-
     fig.update_layout(title='Linear Regression',
                       xaxis_title='Google Fit Calorie Reading',
                       yaxis_title='Ainsworth METs')
-
-    # fig.show()
     py.offline.plot(fig, filename='LR_google_fit.html', auto_open=False)
-
     outf = open('r2_google_fit.txt', 'a')
-    outf.write('%g\n' % r2_score(ainsworth_all_reshaped, y_pred))
+    outf.write('%g\n' % r2_score(ainsworth_all_reshaped_gf, y_pred))
     outf.close()
-    print("The r2 score for Google Fit is: %g" % (r2_score(ainsworth_all_reshaped, y_pred)))
+    print("The r2 score for Google Fit is: %g" % (r2_score(ainsworth_all_reshaped_gf, y_pred)))
+
+    act_dict = {}
+    activities = ['breathing', 'computer', 'slow walk', 'fast walk', 'standing', 'squats', 'reading', 'aerobics',
+                  'sweeping', 'pushups', 'running', 'lie down', 'stairs']
+    for a in activities:
+        act_dict[a] = [[], []]
+    for i in range(len(df_table_all['Activity'])):
+        act_dict[df_table_all['Activity'][i]][0].append(df_table_all['estimation'][i])
+        act_dict[df_table_all['Activity'][i]][1].append(df_table_all['MET (VM3)'][i])
+
+    regr = linear_model.LinearRegression()
+    regr.fit(estimation_all_reshaped, vm3_all_reshaped)
+    y_pred = regr.predict(estimation_all_reshaped)
+    fig = go.Figure()
+    for a in act_dict:
+        fig.add_trace(go.Scatter(x=act_dict[a][0], y=act_dict[a][1], mode='markers', name=a))
+    y_plot = np.reshape(y_pred, y_pred.shape[0])
+    fig.add_trace(
+        go.Scatter(x=l_estimation_all, y=y_plot, mode='lines', name='linear regression', line=dict(color='red', width=4)))
+    fig.update_layout(title='Linear Regression',
+                      xaxis_title='Estimation',
+                      yaxis_title='VM3 METs')
+    py.offline.plot(fig, filename='LR_est_vs_vm3_lab.html', auto_open=False)
+    outf = open('lab_est_vs_vm3_r2.txt', 'a')
+    outf.write('%g\n' % r2_score(vm3_all_reshaped, y_pred))
+    outf.close()
+    print("The r2 score for in lab estimation vs VM3 is: %g" % (r2_score(vm3_all_reshaped, y_pred)))
 
 
 def test_and_estimate(study_path, participants):

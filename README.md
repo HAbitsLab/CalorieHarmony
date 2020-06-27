@@ -1,13 +1,6 @@
 # CalorieHarmony
 
-#Installation
-
-pip install requirmentes.txt << Create this file 
-
-Assumption: the wrist pipeline have been run before this step
-
-expected input: Write down the type of data that is expected.
-
+Make sure the wrist pipeline was run before this step
 
 > Preprocressing.py:  
 
@@ -20,11 +13,16 @@ input of this and output.
 PX In Lab IntensityMETActivityLevel << 
 
  
- 
- 
- > build_model.py
+> cv.py
 
+cross validation
 
+build model, estimate and graph results
 
-> add an output folder 
+> compare_wild.py
 
+in-wild: estimate and compare the results of WRIST and ActiGraph
+
+> stat_for_paper.py
+
+print numbers in paper
