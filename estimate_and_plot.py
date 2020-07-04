@@ -9,6 +9,7 @@ import plotly.graph_objects as go
 from time import time
 import joblib
 from build_model import extract_features
+from scipy.stats import pearsonr, spearmanr
 
 
 def get_data_target_table(study_path, participants, model):
@@ -276,6 +277,19 @@ def plot_results(df_table_all, study_path):
     outf.write('%g\n' % r2_score(vm3_all_reshaped, y_pred))
     outf.close()
     print("The r2 score for in lab estimation vs VM3 is: %g" % (r2_score(vm3_all_reshaped, y_pred)))
+
+    # calculate Pearson's correlation
+    corr, _ = pearsonr(np.array(l_estimation_all), np.array(l_vm3_all))
+    print('Pearsons correlation: %g' % corr)
+    outf = open('lab_est_vs_vm3_pearson.txt', 'a')
+    outf.write('%g\n' % corr)
+    outf.close()
+    # calculate Spearman's correlation
+    corr, _ = spearmanr(np.array(l_estimation_all), np.array(l_vm3_all))
+    print('Spearmans correlation: %g' % corr)
+    outf = open('lab_est_vs_vm3_spearman.txt', 'a')
+    outf.write('%g\n' % corr)
+    outf.close()
 
 
 def test_and_estimate(study_path, participants):

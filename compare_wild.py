@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 from time import time
 import joblib
 from estimate_and_plot import extract_features, add_estimation
+from scipy.stats import pearsonr, spearmanr
 
 
 def main():
@@ -105,6 +106,20 @@ def main():
         outf.write('%g\n' % r2_score(vm3_all_reshaped, y_pred))
         outf.close()
         print("The r2 score for in wild estimation vs VM3 is: %g" % (r2_score(vm3_all_reshaped, y_pred)))
+
+        # calculate Pearson's correlation
+        corr, _ = pearsonr(np.array(l_estimation_all), np.array(l_vm3_all))
+        print('Pearsons correlation: %g' % corr)
+        outf = open('wild_est_vs_vm3_pearson.txt', 'a')
+        outf.write('%g\n' % corr)
+        outf.close()
+        # calculate Spearman's correlation
+        corr, _ = spearmanr(np.array(l_estimation_all), np.array(l_vm3_all))
+        print('Spearmans correlation: %g' % corr)
+        outf = open('wild_est_vs_vm3_spearman.txt', 'a')
+        outf.write('%g\n' % corr)
+        outf.close()
+
         py.offline.plot(fig, filename='in_wild_model_to_vm3.html', auto_open=False)
 
 
