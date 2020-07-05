@@ -204,7 +204,9 @@ if __name__ == '__main__':
                 text_file.close()
     print('WRIST vs ActiGraph (in-lab) Pearson:')
     print('mean:')
-    print(sum(temp) / len(temp))
+    print(np.mean(temp))
+    print('std:')
+    print(np.std(temp))
 
     temp = []
     for root, dirs, files in os.walk("/Users/wilsonwang/Documents/GitHub/CalorieHarmony/output_files"):
@@ -215,7 +217,9 @@ if __name__ == '__main__':
                 text_file.close()
     print('WRIST vs ActiGraph (in-lab) Spearman:')
     print('mean:')
-    print(sum(temp) / len(temp))
+    print(np.mean(temp))
+    print('std:')
+    print(np.std(temp))
 
     temp = []
     for root, dirs, files in os.walk("/Users/wilsonwang/Documents/GitHub/CalorieHarmony/output_files"):
@@ -226,7 +230,9 @@ if __name__ == '__main__':
                 text_file.close()
     print('WRIST vs ActiGraph (in-wild) Pearson:')
     print('mean:')
-    print(sum(temp) / len(temp))
+    print(np.mean(temp))
+    print('std:')
+    print(np.std(temp))
 
     temp = []
     for root, dirs, files in os.walk("/Users/wilsonwang/Documents/GitHub/CalorieHarmony/output_files"):
@@ -237,4 +243,6 @@ if __name__ == '__main__':
                 text_file.close()
     print('WRIST vs ActiGraph (in-wild) Spearman:')
     print('mean:')
-    print(sum(temp) / len(temp))
+    print(np.mean(temp))
+    print('std:')
+    print(np.std(temp))
