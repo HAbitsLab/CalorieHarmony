@@ -17,7 +17,7 @@ def get_data_target_table(study_path, participants, model):
     This function goes through each participants' files
     and generate the testing data needed to test the classification model.
     It outputs testing data, testing labels, and an aggregated table with model prediction.
-    
+
     Parameters:
         :param study_path: the path of the study folder (the folder that contains all participants' folders)
         :param participants: list of participant numbers in str (eg. ["P301","P302","P401"])
@@ -163,6 +163,50 @@ def plot_results(df_table_all, study_path):
     l_google_fit = [l_google_fit[i] for i in range(len(l_google_fit)) if l_google_fit[i] >= 0]
     l_ainsworth_gf = [l_ainsworth[i] for i in range(len(l_google_fit)) if l_google_fit[i] >= 0]
 
+    # calculate Pearson's correlation
+    corr, _ = pearsonr(np.array(l_estimation_all), np.array(l_vm3_all))
+    print('Pearsons correlation (WRIST vs ActiGraph VM3): %g' % corr)
+    outf = open('lab_est_vs_vm3_pearson.txt', 'a')
+    outf.write('%g\n' % corr)
+    outf.close()
+    corr, _ = pearsonr(np.array(l_ainsworth), np.array(l_vm3_all))
+    print('Pearsons correlation (Ainsworth vs ActiGraph VM3): %g' % corr)
+    outf = open('lab_ainsworth_vs_vm3_pearson.txt', 'a')
+    outf.write('%g\n' % corr)
+    outf.close()
+    corr, _ = pearsonr(np.array(l_ainsworth), np.array(l_estimation_all))
+    print('Pearsons correlation (Ainsworth vs WRIST): %g' % corr)
+    outf = open('lab_ainsworth_vs_est_pearson.txt', 'a')
+    outf.write('%g\n' % corr)
+    outf.close()
+    corr, _ = pearsonr(np.array(l_ainsworth_gf), np.array(l_google_fit))
+    print('Pearsons correlation (Ainsworth vs Google Fit): %g' % corr)
+    outf = open('lab_ainsworth_vs_google_fit_pearson.txt', 'a')
+    outf.write('%g\n' % corr)
+    outf.close()
+
+    # calculate Spearman's correlation
+    corr, _ = spearmanr(np.array(l_estimation_all), np.array(l_vm3_all))
+    print('Spearmans correlation (WRIST vs ActiGraph VM3): %g' % corr)
+    outf = open('lab_est_vs_vm3_spearman.txt', 'a')
+    outf.write('%g\n' % corr)
+    outf.close()
+    corr, _ = spearmanr(np.array(l_ainsworth), np.array(l_vm3_all))
+    print('Spearmans correlation (Ainsworth vs ActiGraph VM3): %g' % corr)
+    outf = open('lab_ainsworth_vs_vm3_spearman.txt', 'a')
+    outf.write('%g\n' % corr)
+    outf.close()
+    corr, _ = spearmanr(np.array(l_ainsworth), np.array(l_estimation_all))
+    print('Spearmans correlation (Ainsworth vs WRIST): %g' % corr)
+    outf = open('lab_ainsworth_vs_est_spearman.txt', 'a')
+    outf.write('%g\n' % corr)
+    outf.close()
+    corr, _ = spearmanr(np.array(l_ainsworth_gf), np.array(l_google_fit))
+    print('Spearmans correlation (Ainsworth vs Google Fit): %g' % corr)
+    outf = open('lab_ainsworth_vs_google_fit_spearman.txt', 'a')
+    outf.write('%g\n' % corr)
+    outf.close()
+
     vm3_all_reshaped = np.array(l_vm3_all).reshape(-1, 1)
     estimation_all_reshaped = np.array(l_estimation_all).reshape(-1, 1)
     ainsworth_all_reshaped = np.array(l_ainsworth).reshape(-1, 1)
@@ -277,19 +321,6 @@ def plot_results(df_table_all, study_path):
     outf.write('%g\n' % r2_score(vm3_all_reshaped, y_pred))
     outf.close()
     print("The r2 score for in lab estimation vs VM3 is: %g" % (r2_score(vm3_all_reshaped, y_pred)))
-
-    # calculate Pearson's correlation
-    corr, _ = pearsonr(np.array(l_estimation_all), np.array(l_vm3_all))
-    print('Pearsons correlation: %g' % corr)
-    outf = open('lab_est_vs_vm3_pearson.txt', 'a')
-    outf.write('%g\n' % corr)
-    outf.close()
-    # calculate Spearman's correlation
-    corr, _ = spearmanr(np.array(l_estimation_all), np.array(l_vm3_all))
-    print('Spearmans correlation: %g' % corr)
-    outf = open('lab_est_vs_vm3_spearman.txt', 'a')
-    outf.write('%g\n' % corr)
-    outf.close()
 
 
 def test_and_estimate(study_path, participants):

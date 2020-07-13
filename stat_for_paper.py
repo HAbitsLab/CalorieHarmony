@@ -195,14 +195,53 @@ if __name__ == '__main__':
     print('min:')
     print(min(r2))
 
+    # temp = []
+    # for root, dirs, files in os.walk("/Users/wilsonwang/Documents/GitHub/CalorieHarmony/output_files"):
+    #     for file in files:
+    #         if file.endswith("lab_est_vs_vm3_pearson.txt"):
+    #             text_file = open(os.path.join(root, file), 'r')
+    #             temp.append(float(text_file.read().split('\n')[0]))
+    #             text_file.close()
+    # print('WRIST vs ActiGraph (in-lab) Pearson:')
+    # print('mean:')
+    # print(np.mean(temp))
+    # print('std:')
+    # print(np.std(temp))
+
     temp = []
     for root, dirs, files in os.walk("/Users/wilsonwang/Documents/GitHub/CalorieHarmony/output_files"):
         for file in files:
-            if file.endswith("lab_est_vs_vm3_pearson.txt"):
+            if file.endswith("lab_ainsworth_vs_vm3_spearman.txt"):
                 text_file = open(os.path.join(root, file), 'r')
                 temp.append(float(text_file.read().split('\n')[0]))
                 text_file.close()
-    print('WRIST vs ActiGraph (in-lab) Pearson:')
+    print('Ainsworth vs ActiGraph (in-lab) Spearman:')
+    print('mean:')
+    print(np.mean(temp))
+    print('std:')
+    print(np.std(temp))
+
+    temp = []
+    for root, dirs, files in os.walk("/Users/wilsonwang/Documents/GitHub/CalorieHarmony/output_files"):
+        for file in files:
+            if file.endswith("lab_ainsworth_vs_est_spearman.txt"):
+                text_file = open(os.path.join(root, file), 'r')
+                temp.append(float(text_file.read().split('\n')[0]))
+                text_file.close()
+    print('Ainsworth vs WRIST (in-lab) Spearman:')
+    print('mean:')
+    print(np.mean(temp))
+    print('std:')
+    print(np.std(temp))
+
+    temp = []
+    for root, dirs, files in os.walk("/Users/wilsonwang/Documents/GitHub/CalorieHarmony/output_files"):
+        for file in files:
+            if file.endswith("lab_ainsworth_vs_google_fit_spearman.txt"):
+                text_file = open(os.path.join(root, file), 'r')
+                temp.append(float(text_file.read().split('\n')[0]))
+                text_file.close()
+    print('Ainsworth vs Google Fit (in-lab) Spearman:')
     print('mean:')
     print(np.mean(temp))
     print('std:')
@@ -221,18 +260,18 @@ if __name__ == '__main__':
     print('std:')
     print(np.std(temp))
 
-    temp = []
-    for root, dirs, files in os.walk("/Users/wilsonwang/Documents/GitHub/CalorieHarmony/output_files"):
-        for file in files:
-            if file.endswith("wild_est_vs_vm3_pearson.txt"):
-                text_file = open(os.path.join(root, file), 'r')
-                temp.append(float(text_file.read().split('\n')[0]))
-                text_file.close()
-    print('WRIST vs ActiGraph (in-wild) Pearson:')
-    print('mean:')
-    print(np.mean(temp))
-    print('std:')
-    print(np.std(temp))
+    # temp = []
+    # for root, dirs, files in os.walk("/Users/wilsonwang/Documents/GitHub/CalorieHarmony/output_files"):
+    #     for file in files:
+    #         if file.endswith("wild_est_vs_vm3_pearson.txt"):
+    #             text_file = open(os.path.join(root, file), 'r')
+    #             temp.append(float(text_file.read().split('\n')[0]))
+    #             text_file.close()
+    # print('WRIST vs ActiGraph (in-wild) Pearson:')
+    # print('mean:')
+    # print(np.mean(temp))
+    # print('std:')
+    # print(np.std(temp))
 
     temp = []
     for root, dirs, files in os.walk("/Users/wilsonwang/Documents/GitHub/CalorieHarmony/output_files"):
