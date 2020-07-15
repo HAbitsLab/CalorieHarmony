@@ -1,18 +1,15 @@
 import os
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 import numpy as np
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import classification_report
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import cohen_kappa_score
-import scipy.stats as st
+import sys
 
 
 if __name__ == '__main__':
-    output_path = '/Users/wilsonwang/Documents/GitHub/CalorieHarmony/output_files'
+    # path of output folder
+    output_path = str(sys.argv[1])
 
     numbers = []
     subfolders = [f.path for f in os.scandir(output_path) if f.is_dir()]
@@ -196,7 +193,7 @@ if __name__ == '__main__':
     print(min(r2))
 
     # temp = []
-    # for root, dirs, files in os.walk("/Users/wilsonwang/Documents/GitHub/CalorieHarmony/output_files"):
+    # for root, dirs, files in os.walk(output_path):
     #     for file in files:
     #         if file.endswith("lab_est_vs_vm3_pearson.txt"):
     #             text_file = open(os.path.join(root, file), 'r')
@@ -209,7 +206,7 @@ if __name__ == '__main__':
     # print(np.std(temp))
 
     temp = []
-    for root, dirs, files in os.walk("/Users/wilsonwang/Documents/GitHub/CalorieHarmony/output_files"):
+    for root, dirs, files in os.walk(output_path):
         for file in files:
             if file.endswith("lab_ainsworth_vs_vm3_spearman.txt"):
                 text_file = open(os.path.join(root, file), 'r')
@@ -222,7 +219,7 @@ if __name__ == '__main__':
     print(np.std(temp))
 
     temp = []
-    for root, dirs, files in os.walk("/Users/wilsonwang/Documents/GitHub/CalorieHarmony/output_files"):
+    for root, dirs, files in os.walk(output_path):
         for file in files:
             if file.endswith("lab_ainsworth_vs_est_spearman.txt"):
                 text_file = open(os.path.join(root, file), 'r')
@@ -235,7 +232,7 @@ if __name__ == '__main__':
     print(np.std(temp))
 
     temp = []
-    for root, dirs, files in os.walk("/Users/wilsonwang/Documents/GitHub/CalorieHarmony/output_files"):
+    for root, dirs, files in os.walk(output_path):
         for file in files:
             if file.endswith("lab_ainsworth_vs_google_fit_spearman.txt"):
                 text_file = open(os.path.join(root, file), 'r')
@@ -248,7 +245,7 @@ if __name__ == '__main__':
     print(np.std(temp))
 
     temp = []
-    for root, dirs, files in os.walk("/Users/wilsonwang/Documents/GitHub/CalorieHarmony/output_files"):
+    for root, dirs, files in os.walk(output_path):
         for file in files:
             if file.endswith("lab_est_vs_vm3_spearman.txt"):
                 text_file = open(os.path.join(root, file), 'r')
@@ -261,7 +258,7 @@ if __name__ == '__main__':
     print(np.std(temp))
 
     # temp = []
-    # for root, dirs, files in os.walk("/Users/wilsonwang/Documents/GitHub/CalorieHarmony/output_files"):
+    # for root, dirs, files in os.walk(output_path):
     #     for file in files:
     #         if file.endswith("wild_est_vs_vm3_pearson.txt"):
     #             text_file = open(os.path.join(root, file), 'r')
@@ -274,7 +271,7 @@ if __name__ == '__main__':
     # print(np.std(temp))
 
     temp = []
-    for root, dirs, files in os.walk("/Users/wilsonwang/Documents/GitHub/CalorieHarmony/output_files"):
+    for root, dirs, files in os.walk(output_path):
         for file in files:
             if file.endswith("wild_est_vs_vm3_spearman.txt"):
                 text_file = open(os.path.join(root, file), 'r')
