@@ -7,6 +7,7 @@ def main():
     utility.py needs to be run before it.
     This script generates the tables needed to build the model.
     """
+    # TODO there is no utility.py
 
     # path of study folder
     study_path = str(sys.argv[1])

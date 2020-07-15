@@ -20,6 +20,7 @@ def extract_features(gyro_data):
 
 
 def get_data_target_table(study_path, participants):
+    # TODO: can set the gyro vs accel as function parameter
     """
     The script preprocessing.py needs to be run first to have the tables generated.
     This function goes through each participants' files
@@ -36,13 +37,14 @@ def get_data_target_table(study_path, participants):
     tables = []
 
     for p in participants:
+        # TODO Hard coded study paths
         path_ts = study_path + '/' + p + '/In Lab/' + p + ' In Lab Log.csv'
         df_ts = pd.read_csv(path_ts, index_col=None, header=0)
-
+        # TODO Hard coded study paths
         path_table = study_path + '/' + p + '/In Lab/Summary/Actigraph/' + p + ' In Lab IntensityMETActivityLevel.csv'
         df_table = pd.read_csv(path_table, index_col=None, header=0)
         tables.append(df_table)
-
+        # TODO Hard coded study paths
         path_df = study_path + '/' + p + '/In Lab/Wrist/Aggregated/Gyroscope/Gyroscope_resampled.csv'
         # if using accel data to train
         # path_df = study_path + '/' + p + '/In Lab/Wrist/Aggregated/Accelerometer/Accelerometer_resampled.csv'
@@ -81,9 +83,9 @@ def get_data_target_table(study_path, participants):
 
     df_table_all = pd.concat(tables, sort=False).reset_index(drop=True)
 
-    new_data_training = [n for n in data_training if np.count_nonzero(np.isnan(n[0])) < 4]
+    new_data_training = [n for n in data_training if np.count_nonzero(np.isnan(n[0])) < 4]  # TODO why 4 can be set to const
     new_target_training = [target[i] for i in range(len(data_training)) if
-                           np.count_nonzero(np.isnan(data_training[i][0])) < 4]
+                           np.count_nonzero(np.isnan(data_training[i][0])) < 4]  # TODO why 4 can be set to const
 
     np_target_training = np.array(new_target_training)
 
@@ -92,7 +94,7 @@ def get_data_target_table(study_path, participants):
     return extract_features(new_data_training), np_target_training, df_table_all
 
 
-def save_intensity_coef(df_table_all, study_path):
+def save_intensity_coef(df_table_all, study_path):  # TODO: why study_path param if not used
     """
     This function takes the aggregated table and build a linear regression model.
     The _coef is saved in a txt file for estimate_and_plot.py to use.
@@ -129,7 +131,7 @@ def build_classification_model(data, target, study_path):
         :param target: training labels
         :param study_path: the path of the study folder (the folder that contains all participants' folders)
     """
-
+    # TODO can move to a settings file
     model = XGBClassifier(learning_rate=0.01,
                           n_estimators=400,
                           max_depth=10,
@@ -147,7 +149,7 @@ def build_classification_model(data, target, study_path):
     model.fit(data, target)
     t1 = time()
     print("Training Time (minutes): %g" % (float(t1 - t0) / float(60)))
-
+    # TODO more meaningful model name
     joblib.dump(model, 'xgbc.dat')
 
     y_pred = model.predict(data)
