@@ -3,7 +3,7 @@ import sys
 from sklearn import metrics
 from time import time
 import joblib
-from helper_estimate import get_data_target_table, add_estimation, plot_results
+from helper_estimate import get_data_target_table, set_realistic_met_estimate, plot_results
 
 
 def test_and_estimate(study_path, participants):
@@ -19,6 +19,7 @@ def test_and_estimate(study_path, participants):
 
     t0 = time()
 
+    # TODO can move to a settings file
     model = XGBClassifier(learning_rate=0.01,
                           n_estimators=400,
                           max_depth=10,
@@ -42,7 +43,7 @@ def test_and_estimate(study_path, participants):
     outf.close()
     print("Test Accuracy: %g" % metrics.accuracy_score(target, y_pred))
 
-    add_estimation(table, study_path)
+    set_realistic_met_estimate(table, study_path)
 
     table.to_csv('table_with_estimation.csv', index=False, encoding='utf8')
 

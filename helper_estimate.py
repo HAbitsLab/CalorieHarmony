@@ -25,16 +25,17 @@ def get_data_target_table(study_path, participants, model):
     tables = []
 
     for p in participants:
+        # TODO Hard coded study paths
         path_ts = study_path + '/' + p + '/In Lab/' + p + ' In Lab Log.csv'
         df_ts = pd.read_csv(path_ts, index_col=None, header=0)
-
+        # TODO Hard coded study paths
         path_gyro = study_path + '/' + p + '/In Lab/Wrist/Aggregated/Gyroscope/Gyroscope_resampled.csv'
         df_gyro = pd.read_csv(path_gyro, index_col=None, header=0)
         df_gyro['Datetime'] = pd.to_datetime(df_gyro['Time'], unit='ms', utc=True).dt.tz_convert(
             'America/Chicago').dt.tz_localize(None)
 
         sedentary_activities = ['breathing', 'computer', 'reading', 'lie down']
-
+        # TODO Hard coded study paths
         path_table = study_path + '/' + p + '/In Lab/Summary/Actigraph/' + p + ' In Lab IntensityMETActivityLevel.csv'
         df_table = pd.read_csv(path_table, index_col=None, header=0)
 
@@ -63,7 +64,7 @@ def get_data_target_table(study_path, participants, model):
 
                     if len(temp_gyro['rotX']) != 0:
                         this_min_gyro = [temp_gyro['rotX'], temp_gyro['rotY'], temp_gyro['rotZ']]
-                        if np.count_nonzero(np.isnan(this_min_gyro[0])) > 4:
+                        if np.count_nonzero(np.isnan(this_min_gyro[0])) > 4:  # TODO 4 can be const variable
                             prediction.append(-1)
                         else:
                             model_output = model.predict(extract_features([this_min_gyro]))
@@ -77,9 +78,9 @@ def get_data_target_table(study_path, participants, model):
         df_table['model_classification'] = prediction
         tables.append(df_table)
 
-    new_data_gyro = [n for n in data_gyro if np.count_nonzero(np.isnan(n[0])) < 4]
+    new_data_gyro = [n for n in data_gyro if np.count_nonzero(np.isnan(n[0])) < 4]  # TODO 4 can be const variable
     new_target_gyro = [target[i] for i in range(len(data_gyro)) if
-                       np.count_nonzero(np.isnan(data_gyro[i][0])) < 4]
+                       np.count_nonzero(np.isnan(data_gyro[i][0])) < 4] # TODO 4 can be const variable
 
     # np_data_gyro = np.array(new_data_gyro)
     np_target_gyro = np.array(new_target_gyro)
@@ -91,7 +92,7 @@ def get_data_target_table(study_path, participants, model):
     return extract_features(new_data_gyro), np_target_gyro, df_table_all
 
 
-def add_estimation(table, study_path):
+def set_realistic_met_estimate(table, study_path): # TODO: why study_path param if not used
     """
     This function adds the rescaled intensity values and the estimation to the table.
 
@@ -110,31 +111,31 @@ def add_estimation(table, study_path):
 
     estimation = []
     for i in range(len(table['model_classification'])):
-        c = table['model_classification'][i]
-        s = table['scaled_intensity'][i]
+        model_classification = table['model_classification'][i]
+        scaled_intensity = table['scaled_intensity'][i]
 
-        if c == -1:
-            if s < 1:
+        if model_classification == -1:
+            if scaled_intensity < 1:
                 estimation.append(1)
             else:
-                estimation.append(s)
-        elif c == 0:
-            if s < 1:
+                estimation.append(scaled_intensity)
+        elif model_classification == 0:
+            if scaled_intensity < 1:
                 estimation.append(1)
-            elif s > 1.5:
+            elif scaled_intensity > 1.5:
                 estimation.append(1.5)
             else:
-                estimation.append(s)
-        elif c == 1:
-            if s < 1.5:
+                estimation.append(scaled_intensity)
+        elif model_classification == 1:
+            if scaled_intensity < 1.5:
                 estimation.append(1.5)
             else:
-                estimation.append(s)
+                estimation.append(scaled_intensity)
 
     table['estimation'] = estimation
 
 
-def plot_results(df_table_all, study_path):
+def plot_results(df_table_all, study_path):  # TODO: why study_path param if not used
     """
     This function takes the values from the table to visualize them.
     It compares the model's estimation, ActiGraph's estimation and Google Fit Estimation to the Ainsworth METs.
@@ -150,12 +151,14 @@ def plot_results(df_table_all, study_path):
     l_ainsworth = df_table_all['MET (Ainsworth)'].tolist()
     l_google_fit = df_table_all['MET (Google Fit)'].tolist()
 
+    # remove nan
     l_google_fit = [l_google_fit[i] for i in range(len(l_estimation_all)) if not np.isnan(l_estimation_all[i])]
     l_vm3_all = [l_vm3_all[i] for i in range(len(l_estimation_all)) if not np.isnan(l_estimation_all[i])]
     l_estimation_all = [l_estimation_all[i] for i in range(len(l_estimation_all)) if
                         not np.isnan(l_estimation_all[i])]
     l_ainsworth = [l_ainsworth[i] for i in range(len(l_estimation_all)) if not np.isnan(l_estimation_all[i])]
 
+    # remove negative numbers
     l_google_fit = [l_google_fit[i] for i in range(len(l_google_fit)) if l_google_fit[i] >= 0]
     l_ainsworth_gf = [l_ainsworth[i] for i in range(len(l_google_fit)) if l_google_fit[i] >= 0]
 

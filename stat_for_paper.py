@@ -11,6 +11,7 @@ if __name__ == '__main__':
     # path of output folder
     output_path = str(sys.argv[1])
 
+    # TODO: modularize into functions for each
     numbers = []
     subfolders = [f.path for f in os.scandir(output_path) if f.is_dir()]
     for f in subfolders:

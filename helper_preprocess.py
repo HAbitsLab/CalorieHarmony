@@ -4,11 +4,13 @@ import os
 
 
 def watch_add_datetime(watch_df):
+    # Todo: func docstring comment
     watch_df['Datetime'] = pd.to_datetime(watch_df['Time'], unit='ms', utc=True).dt.tz_convert(
         'America/Chicago').dt.tz_localize(None)
 
 
 def actigraph_add_datetime(actigraph_data):
+    # Todo: func docstring comment
     datetime = []
     for i in range(len(actigraph_data['date'])):
         date = pd.to_datetime(actigraph_data['date'][i], format='%m/%d/%Y').date()
@@ -19,6 +21,7 @@ def actigraph_add_datetime(actigraph_data):
 
 
 def get_intensity(watch_df, st):
+    # Todo: func docstring comment
     et = st + pd.DateOffset(minutes=1)
     temp = watch_df.loc[(watch_df['Datetime'] >= st) & (watch_df['Datetime'] < et)].reset_index(drop=True)
     sum_x_sq = 0
@@ -47,20 +50,22 @@ def get_intensity(watch_df, st):
 
 
 def get_met_freedson(df_acti, st):
+    # Todo: func docstring comment
     et = st + pd.DateOffset(minutes=1)
     temp = df_acti.loc[(df_acti['Datetime'] >= st) & (df_acti['Datetime'] < et)].reset_index(drop=True)
     if len(temp['axis1']) > 0:
-        met = temp['axis1'][0] * 0.000795 + 1.439008
+        met = temp['axis1'][0] * 0.000795 + 1.439008  # Todo: is this from other paper maybe reference comment
         return met
     else:
         return np.nan
 
 
 def get_met_vm3(df_acti, st):
+    # Todo: func docstring comment
     et = st + pd.DateOffset(minutes=1)
     temp = df_acti.loc[(df_acti['Datetime'] >= st) & (df_acti['Datetime'] < et)].reset_index(drop=True)
     vm3 = (temp['axis1'][0] ** 2 + temp['axis2'][0] ** 2 + temp['axis3'][0] ** 2) ** 0.5
-    met = 0.000863 * vm3 + 0.668876
+    met = 0.000863 * vm3 + 0.668876  # Todo: is this from other paper maybe reference comment
     return met
 
 
@@ -69,6 +74,7 @@ def cal_to_met(cal, weight):
 
 
 def generate_table_wild(study_path, p_num, state):
+    # Todo: func docstring comment
     print('\n\nReading ActiGraph, watch, and timesheet data...')
     path_acti_freedson = study_path + "/" + p_num + "/" + state + "/Actigraph/Clean/" + p_num + ' ' + state + " Freedson.csv"
     path_acti_vm3 = study_path + "/" + p_num + "/" + state + "/Actigraph/Clean/" + p_num + ' ' + state + " VM3.csv"
@@ -134,8 +140,10 @@ def generate_table_wild(study_path, p_num, state):
 
 
 def generate_table_lab(study_path, p_num, state):
+    # Todo: func docstring comment
     print('\n\nParticipant: ' + p_num)
     print('Reading ActiGraph, watch, and timesheet data...')
+    # Todo: possible to clean up paths?
     path_acti_freedson = study_path + "/" + p_num + "/" + state + "/Actigraph/Clean/" + p_num + ' ' + state + " Freedson.csv"
     path_acti_vm3 = study_path + "/" + p_num + "/" + state + "/Actigraph/Clean/" + p_num + ' ' + state + " VM3.csv"
     path_accel = study_path + "/" + p_num + "/" + state + '/Wrist/Aggregated/Accelerometer/Accelerometer_resampled.csv'
