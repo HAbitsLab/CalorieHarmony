@@ -282,3 +282,39 @@ if __name__ == '__main__':
     print(np.mean(temp))
     print('std:')
     print(np.std(temp))
+
+    print('Overall (combining all data points):')
+    temp = []
+    for root, dirs, files in os.walk(output_path):
+        for file in files:
+            if file.endswith("table_with_estimation.csv"):
+                path_table = os.path.join(root, file)
+                df = pd.read_csv(path_table, index_col=None, header=0)
+                temp.append(df)
+    df_table_all = pd.concat(temp).reset_index(drop=True)
+
+    l_vm3_all = df_table_all['MET (VM3)'].tolist()
+    l_estimation_all = df_table_all['estimation'].tolist()
+    l_ainsworth = df_table_all['MET (Ainsworth)'].tolist()
+    l_google_fit = df_table_all['MET (Google Fit)'].tolist()
+
+    l_google_fit = [l_google_fit[i] for i in range(len(l_estimation_all)) if not np.isnan(l_estimation_all[i])]
+    l_vm3_all = [l_vm3_all[i] for i in range(len(l_estimation_all)) if not np.isnan(l_estimation_all[i])]
+    l_estimation_all = [l_estimation_all[i] for i in range(len(l_estimation_all)) if
+                        not np.isnan(l_estimation_all[i])]
+    l_ainsworth = [l_ainsworth[i] for i in range(len(l_estimation_all)) if not np.isnan(l_estimation_all[i])]
+
+    l_google_fit = [l_google_fit[i] for i in range(len(l_google_fit)) if l_google_fit[i] >= 0]
+    l_ainsworth_gf = [l_ainsworth[i] for i in range(len(l_google_fit)) if l_google_fit[i] >= 0]
+
+    corr, _ = spearmanr(np.array(l_estimation_all), np.array(l_vm3_all))
+    print('Spearmans correlation (WRIST vs ActiGraph VM3): %g' % corr)
+
+    corr, _ = spearmanr(np.array(l_ainsworth), np.array(l_vm3_all))
+    print('Spearmans correlation (Ainsworth vs ActiGraph VM3): %g' % corr)
+
+    corr, _ = spearmanr(np.array(l_ainsworth), np.array(l_estimation_all))
+    print('Spearmans correlation (Ainsworth vs WRIST): %g' % corr)
+
+    corr, _ = spearmanr(np.array(l_ainsworth_gf), np.array(l_google_fit))
+    print('Spearmans correlation (Ainsworth vs Google Fit): %g' % corr)
