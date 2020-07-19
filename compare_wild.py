@@ -33,7 +33,7 @@ def main():
         else:
             os.chdir(os.path.join(os.getcwd(), 'output_files', 'using_all'))
 
-        # TODO can move to a settings file
+        # TODO can move to a settings file (test, then delete if not needed)
         model = XGBClassifier(learning_rate=0.01,
                               n_estimators=400,
                               max_depth=10,
@@ -48,14 +48,16 @@ def main():
                               )
         model = joblib.load('xgbc.dat')
 
-        # TODO Hard coded study paths
-        path_table = study_path + '/' + p + '/In Wild/Summary/Actigraph/' + p + ' In Wild IntensityMETMinLevel.csv'
+        path_table = os.path.join(study_path, p, 'In Wild/Summary/Actigraph/', p, ' In Wild IntensityMETMinLevel.csv')
         df_table = pd.read_csv(path_table, index_col=None, header=0)
-        # TODO Hard coded study paths
-        path_gyro = study_path + '/' + p + '/In Wild/Wrist/Aggregated/Gyroscope/Gyroscope_resampled.csv'
+        path_gyro = os.path.join(study_path, p, 'In Wild/Wrist/Aggregated/Gyroscope/Gyroscope_resampled.csv')
         df_gyro = pd.read_csv(path_gyro, index_col=None, header=0)
         df_gyro['Datetime'] = pd.to_datetime(df_gyro['Time'], unit='ms', utc=True).dt.tz_convert(
             'America/Chicago').dt.tz_localize(None)
+
+        # minute level data at 20hz, so 60*20 = 1200
+        data_length = 1200
+        nan_limit = 4
 
         prediction = []
         for n in df_table['Datetime']:
@@ -63,9 +65,9 @@ def main():
             end_time = start_time + pd.DateOffset(minutes=1)
             temp_gyro = df_gyro.loc[(df_gyro['Datetime'] >= start_time)
                                     & (df_gyro['Datetime'] < end_time)].reset_index(drop=True)
-            if len(temp_gyro['rotX']) == 1200: # TODO what is this 1200? min about of sample needed?
+            if len(temp_gyro['rotX']) == data_length:
                 this_min_gyro = [temp_gyro['rotX'], temp_gyro['rotY'], temp_gyro['rotZ']]
-                if np.count_nonzero(np.isnan(this_min_gyro[0])) > 4:  # TODO why 4 can be set to const
+                if np.count_nonzero(np.isnan(this_min_gyro[0])) > nan_limit:
                     prediction.append(-1)
                 else:
                     model_output = model.predict(extract_features([this_min_gyro]))

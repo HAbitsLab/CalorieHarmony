@@ -19,7 +19,7 @@ def test_and_estimate(study_path, participants):
 
     t0 = time()
 
-    # TODO can move to a settings file
+    # TODO can move to a settings file (test, then delete if not needed)
     model = XGBClassifier(learning_rate=0.01,
                           n_estimators=400,
                           max_depth=10,

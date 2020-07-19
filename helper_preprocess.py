@@ -4,13 +4,23 @@ import os
 
 
 def watch_add_datetime(watch_df):
-    # Todo: func docstring comment
+    """
+    Add the datetime of the watch dataframe to a "Datetime" column.
+
+    :param watch_df: watch dataframe
+    """
+
     watch_df['Datetime'] = pd.to_datetime(watch_df['Time'], unit='ms', utc=True).dt.tz_convert(
         'America/Chicago').dt.tz_localize(None)
 
 
 def actigraph_add_datetime(actigraph_data):
-    # Todo: func docstring comment
+    """
+    Add the datetime of the ActiGraph dataframe to a "Datetime" column.
+
+    :param actigraph_data: ActiGraph dataframe
+    """
+
     datetime = []
     for i in range(len(actigraph_data['date'])):
         date = pd.to_datetime(actigraph_data['date'][i], format='%m/%d/%Y').date()
@@ -21,7 +31,14 @@ def actigraph_add_datetime(actigraph_data):
 
 
 def get_intensity(watch_df, st):
-    # Todo: func docstring comment
+    """
+    Calculate and return the minute level intensity value of given watch using the Panasonic equation.
+
+    :param watch_df: the watch dataframe, used to calculate the intensity value
+    :param st: the start time, data of the next minute will be used for calculation
+    :return: the intensity value of the next minute using the Panasonic equation
+    """
+
     et = st + pd.DateOffset(minutes=1)
     temp = watch_df.loc[(watch_df['Datetime'] >= st) & (watch_df['Datetime'] < et)].reset_index(drop=True)
     sum_x_sq = 0
@@ -50,22 +67,38 @@ def get_intensity(watch_df, st):
 
 
 def get_met_freedson(df_acti, st):
-    # Todo: func docstring comment
+    """
+    Calculate and return the minute level Freedson MET value for the next minute using ActiGraph data.
+    link to paper: https://www.ncbi.nlm.nih.gov/pubmed/9588623
+
+    :param df_acti: the ActiGraph dataframe used for calculating the MET value
+    :param st: the start time, data of next minute will be used
+    :return: the Freedson MET value
+    """
+
     et = st + pd.DateOffset(minutes=1)
     temp = df_acti.loc[(df_acti['Datetime'] >= st) & (df_acti['Datetime'] < et)].reset_index(drop=True)
     if len(temp['axis1']) > 0:
-        met = temp['axis1'][0] * 0.000795 + 1.439008  # Todo: is this from other paper maybe reference comment
+        met = temp['axis1'][0] * 0.000795 + 1.439008
         return met
     else:
         return np.nan
 
 
 def get_met_vm3(df_acti, st):
-    # Todo: func docstring comment
+    """
+    Calculate and return the minute level VM3 MET value for the next minute using ActiGraph data.
+    link to paper: https://www.ncbi.nlm.nih.gov/pubmed/21616714
+
+    :param df_acti: the ActiGraph dataframe used for calculating the MET value
+    :param st: the start time, data of next minute will be used
+    :return: the VM3 MET value
+    """
+
     et = st + pd.DateOffset(minutes=1)
     temp = df_acti.loc[(df_acti['Datetime'] >= st) & (df_acti['Datetime'] < et)].reset_index(drop=True)
     vm3 = (temp['axis1'][0] ** 2 + temp['axis2'][0] ** 2 + temp['axis3'][0] ** 2) ** 0.5
-    met = 0.000863 * vm3 + 0.668876  # Todo: is this from other paper maybe reference comment
+    met = 0.000863 * vm3 + 0.668876
     return met
 
 
@@ -73,12 +106,19 @@ def cal_to_met(cal, weight):
     return cal * 200 / weight / 3.5
 
 
-def generate_table_wild(study_path, p_num, state):
-    # Todo: func docstring comment
+def generate_table_wild(study_path, p_num):
+    """
+    Generate the in-wild table that has the data needed for the model.
+
+    :param study_path: the path of the study folder where data are located
+    :param p_num: participant number
+    """
+    state = 'In Wild'
+
     print('\n\nReading ActiGraph, watch, and timesheet data...')
-    path_acti_freedson = study_path + "/" + p_num + "/" + state + "/Actigraph/Clean/" + p_num + ' ' + state + " Freedson.csv"
-    path_acti_vm3 = study_path + "/" + p_num + "/" + state + "/Actigraph/Clean/" + p_num + ' ' + state + " VM3.csv"
-    path_accel = study_path + "/" + p_num + "/" + state + '/Wrist/Aggregated/Accelerometer/Accelerometer_resampled.csv'
+    path_acti_freedson = os.path.join(study_path, p_num, 'In Wild/Actigraph/Clean/', p_num + ' In Wild Freedson.csv')
+    path_acti_vm3 = os.path.join(study_path, p_num, 'In Wild/Actigraph/Clean/', p_num + ' In Wild VM3.csv')
+    path_accel = os.path.join(study_path, p_num, 'In Wild/Wrist/Aggregated/Accelerometer/Accelerometer_resampled.csv')
 
     df_acti_freedson = pd.read_csv(path_acti_freedson, index_col=None, header=1)
     df_acti_vm3 = pd.read_csv(path_acti_vm3, index_col=None, header=1)
@@ -86,7 +126,7 @@ def generate_table_wild(study_path, p_num, state):
     print('Done')
 
     print('Checking if timesheet exists and reading if it does...')
-    path_ts = study_path + "/" + p_num + "/" + state + "/" + p_num + " " + state + " Log.csv"
+    path_ts = os.path.join(study_path, p_num, 'In Wild', p_num + ' In Wild Log.csv')
 
     if not os.path.exists(path_ts):
         print('Timesheet not found.')
@@ -139,14 +179,21 @@ def generate_table_wild(study_path, p_num, state):
     print('Done')
 
 
-def generate_table_lab(study_path, p_num, state):
-    # Todo: func docstring comment
+def generate_table_lab(study_path, p_num):
+    """
+    Generate the in-lab table that has the data needed for the model.
+
+    :param study_path: the path of the study folder where data are located
+    :param p_num: participant number
+    :param state: 'In Lab' or 'In Wild'
+    """
+    state = 'In Lab'
+
     print('\n\nParticipant: ' + p_num)
     print('Reading ActiGraph, watch, and timesheet data...')
-    # Todo: possible to clean up paths?
-    path_acti_freedson = study_path + "/" + p_num + "/" + state + "/Actigraph/Clean/" + p_num + ' ' + state + " Freedson.csv"
-    path_acti_vm3 = study_path + "/" + p_num + "/" + state + "/Actigraph/Clean/" + p_num + ' ' + state + " VM3.csv"
-    path_accel = study_path + "/" + p_num + "/" + state + '/Wrist/Aggregated/Accelerometer/Accelerometer_resampled.csv'
+    path_acti_freedson = os.path.join(study_path, p_num, 'In Lab/Actigraph/Clean/', p_num + ' In Lab Freedson.csv')
+    path_acti_vm3 = os.path.join(study_path, p_num, 'In Lab/Actigraph/Clean/', p_num + ' In Lab VM3.csv')
+    path_accel = os.path.join(study_path, p_num, 'In Lab/Wrist/Aggregated/Accelerometer/Accelerometer_resampled.csv')
 
     df_acti_freedson = pd.read_csv(path_acti_freedson, index_col=None, header=1)
     df_acti_vm3 = pd.read_csv(path_acti_vm3, index_col=None, header=1)
@@ -154,7 +201,7 @@ def generate_table_lab(study_path, p_num, state):
     print('Done')
 
     print('Checking if timesheet exists and reading if it does...')
-    path_ts = study_path + "/" + p_num + "/" + state + "/" + p_num + " " + state + " Log.csv"
+    path_ts = os.path.join(study_path, p_num, 'In Lab', p_num + ' In Lab Log.csv')
     if not os.path.exists(path_ts):
         print('Timesheet not found.')
 

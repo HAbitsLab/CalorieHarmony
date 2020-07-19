@@ -6,6 +6,7 @@ import plotly as py
 import plotly.graph_objects as go
 from helper_build import extract_features
 from scipy.stats import pearsonr, spearmanr
+import os
 
 
 def get_data_target_table(study_path, participants, model):
@@ -25,19 +26,18 @@ def get_data_target_table(study_path, participants, model):
     tables = []
 
     for p in participants:
-        # TODO Hard coded study paths
-        path_ts = study_path + '/' + p + '/In Lab/' + p + ' In Lab Log.csv'
+        path_ts = os.path.join(study_path, p, 'In Lab', p + ' In Lab Log.csv')
         df_ts = pd.read_csv(path_ts, index_col=None, header=0)
-        # TODO Hard coded study paths
-        path_gyro = study_path + '/' + p + '/In Lab/Wrist/Aggregated/Gyroscope/Gyroscope_resampled.csv'
+        path_gyro = os.path.join(study_path, p, 'In Lab/Wrist/Aggregated/Gyroscope/Gyroscope_resampled.csv')
         df_gyro = pd.read_csv(path_gyro, index_col=None, header=0)
         df_gyro['Datetime'] = pd.to_datetime(df_gyro['Time'], unit='ms', utc=True).dt.tz_convert(
             'America/Chicago').dt.tz_localize(None)
 
         sedentary_activities = ['breathing', 'computer', 'reading', 'lie down']
-        # TODO Hard coded study paths
-        path_table = study_path + '/' + p + '/In Lab/Summary/Actigraph/' + p + ' In Lab IntensityMETActivityLevel.csv'
+        path_table = os.path.join(study_path, p, 'In Lab/Summary/Actigraph/', p + ' In Lab IntensityMETActivityLevel.csv')
         df_table = pd.read_csv(path_table, index_col=None, header=0)
+
+        nan_limit = 4
 
         prediction = []
 
@@ -64,7 +64,7 @@ def get_data_target_table(study_path, participants, model):
 
                     if len(temp_gyro['rotX']) != 0:
                         this_min_gyro = [temp_gyro['rotX'], temp_gyro['rotY'], temp_gyro['rotZ']]
-                        if np.count_nonzero(np.isnan(this_min_gyro[0])) > 4:  # TODO 4 can be const variable
+                        if np.count_nonzero(np.isnan(this_min_gyro[0])) > nan_limit:
                             prediction.append(-1)
                         else:
                             model_output = model.predict(extract_features([this_min_gyro]))
@@ -78,9 +78,9 @@ def get_data_target_table(study_path, participants, model):
         df_table['model_classification'] = prediction
         tables.append(df_table)
 
-    new_data_gyro = [n for n in data_gyro if np.count_nonzero(np.isnan(n[0])) < 4]  # TODO 4 can be const variable
+    new_data_gyro = [n for n in data_gyro if np.count_nonzero(np.isnan(n[0])) < nan_limit]
     new_target_gyro = [target[i] for i in range(len(data_gyro)) if
-                       np.count_nonzero(np.isnan(data_gyro[i][0])) < 4] # TODO 4 can be const variable
+                       np.count_nonzero(np.isnan(data_gyro[i][0])) < nan_limit]
 
     # np_data_gyro = np.array(new_data_gyro)
     np_target_gyro = np.array(new_target_gyro)
@@ -92,13 +92,12 @@ def get_data_target_table(study_path, participants, model):
     return extract_features(new_data_gyro), np_target_gyro, df_table_all
 
 
-def set_realistic_met_estimate(table, study_path): # TODO: why study_path param if not used
+def set_realistic_met_estimate(table):
     """
     This function adds the rescaled intensity values and the estimation to the table.
 
     Parameters:
         :param table: the table
-        :param study_path: the path of the study folder (the folder that contains all participants' folders)
     """
 
     outf = open('intensity_coef.txt', 'r')
@@ -135,7 +134,7 @@ def set_realistic_met_estimate(table, study_path): # TODO: why study_path param 
     table['estimation'] = estimation
 
 
-def plot_results(df_table_all, study_path):  # TODO: why study_path param if not used
+def plot_results(df_table_all):
     """
     This function takes the values from the table to visualize them.
     It compares the model's estimation, ActiGraph's estimation and Google Fit Estimation to the Ainsworth METs.
@@ -143,7 +142,6 @@ def plot_results(df_table_all, study_path):  # TODO: why study_path param if not
 
     Parameters:
         :param df_table_all: the aggregated table
-        :param study_path: the path of the study folder (the folder that contains all participants' folders)
     """
 
     l_vm3_all = df_table_all['MET (VM3)'].tolist()

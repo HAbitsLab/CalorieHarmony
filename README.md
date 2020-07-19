@@ -2,6 +2,8 @@
 
 Make sure the wrist pipeline was run before this step
 
+(The wrist data are aggregated and sorted into one csv file, then resampled to 20hz)
+
 > Preprocressing.py:  
 
 will use the wrist and actigraph data to generate a table 

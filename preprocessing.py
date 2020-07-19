@@ -4,10 +4,9 @@ from helper_preprocess import generate_table_lab, generate_table_wild
 
 def main():
     """
-    utility.py needs to be run before it.
+    Wrist data needs to be in one csv file, sorted and resampled to 20hz
     This script generates the tables needed to build the model.
     """
-    # TODO there is no utility.py
 
     # path of study folder
     study_path = str(sys.argv[1])
@@ -20,9 +19,9 @@ def main():
 
     for p_num in participants:
         if state == 'In Lab':
-            generate_table_lab(study_path, p_num, state)
+            generate_table_lab(study_path, p_num)
         elif state == 'In Wild':
-            generate_table_wild(study_path, p_num, state)
+            generate_table_wild(study_path, p_num)
 
 
 if __name__ == '__main__':

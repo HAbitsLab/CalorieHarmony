@@ -5,13 +5,13 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import cohen_kappa_score
 import sys
+from scipy.stats import spearmanr
 
 
-if __name__ == '__main__':
-    # path of output folder
-    output_path = str(sys.argv[1])
-
-    # TODO: modularize into functions for each
+def print_r2_vs_ainsworth(output_path):
+    """
+    print r2 (vs Ainsworth) for WRIST, ActiGraph VM3, and Google Fit.
+    """
     numbers = []
     subfolders = [f.path for f in os.scandir(output_path) if f.is_dir()]
     for f in subfolders:
@@ -21,7 +21,7 @@ if __name__ == '__main__':
             num = file.read().split('\n')
             numbers.append(float(num[0]))
             file.close()
-    print('WristML')
+    print('WRIST')
     print('R2 mean: %g' % np.mean(numbers))
     print('R2 var: %g' % np.var(numbers))
 
@@ -51,6 +51,42 @@ if __name__ == '__main__':
     print('R2 mean: %g' % np.mean(numbers))
     print('R2 var: %g' % np.var(numbers))
 
+
+def print_r2_wrist_vs_acti(output_path):
+    """
+    print r2 score for WRIST vs ActiGraph VM3, in-lab and in-wild.
+    """
+    r2 = []
+    for root, dirs, files in os.walk(output_path):
+        for file in files:
+            if file.endswith("lab_est_vs_vm3_r2.txt"):
+                text_file = open(os.path.join(root, file), 'r')
+                r2.append(float(text_file.read().split('\n')[0]))
+                text_file.close()
+    print('WRIST vs ActiGraph (in-lab) r2:')
+    print('mean:')
+    print(np.mean(r2))
+    print('std:')
+    print(np.std(r2))
+
+    r2 = []
+    for root, dirs, files in os.walk(output_path):
+        for file in files:
+            if file.endswith("wild_est_vs_vm3_r2.txt"):
+                text_file = open(os.path.join(root, file), 'r')
+                r2.append(float(text_file.read().split('\n')[0]))
+                text_file.close()
+    print('WRIST vs ActiGraph (in-wild) r2:')
+    print('mean:')
+    print(np.mean(r2))
+    print('std:')
+    print(np.std(r2))
+
+
+def print_stats(output_path):
+    """
+    print confusion matrix, cohen's kappa, and RMSE values
+    """
     tables = []
     subfolders = [f.path for f in os.scandir(output_path) if f.is_dir()]
     for f in subfolders:
@@ -163,49 +199,11 @@ if __name__ == '__main__':
     rmse = mean_squared_error(df_table_all['MET (Ainsworth)'], df_table_all['estimation'], squared=False)
     print(rmse)
 
-    r2 = []
-    for root, dirs, files in os.walk(output_path):
-        for file in files:
-            if file.endswith("lab_est_vs_vm3_r2.txt"):
-                text_file = open(os.path.join(root, file), 'r')
-                r2.append(float(text_file.read().split('\n')[0]))
-                text_file.close()
-    print('WRIST vs ActiGraph (in-lab) r2:')
-    print('mean:')
-    print(sum(r2) / len(r2))
-    print('max:')
-    print(max(r2))
-    print('min:')
-    print(min(r2))
 
-    r2 = []
-    for root, dirs, files in os.walk(output_path):
-        for file in files:
-            if file.endswith("wild_est_vs_vm3_r2.txt"):
-                text_file = open(os.path.join(root, file), 'r')
-                r2.append(float(text_file.read().split('\n')[0]))
-                text_file.close()
-    print('WRIST vs ActiGraph (in-wild) r2:')
-    print('mean:')
-    print(sum(r2) / len(r2))
-    print('max:')
-    print(max(r2))
-    print('min:')
-    print(min(r2))
-
-    # temp = []
-    # for root, dirs, files in os.walk(output_path):
-    #     for file in files:
-    #         if file.endswith("lab_est_vs_vm3_pearson.txt"):
-    #             text_file = open(os.path.join(root, file), 'r')
-    #             temp.append(float(text_file.read().split('\n')[0]))
-    #             text_file.close()
-    # print('WRIST vs ActiGraph (in-lab) Pearson:')
-    # print('mean:')
-    # print(np.mean(temp))
-    # print('std:')
-    # print(np.std(temp))
-
+def print_spearman_avg(output_path):
+    """
+    print average spearman
+    """
     temp = []
     for root, dirs, files in os.walk(output_path):
         for file in files:
@@ -258,18 +256,6 @@ if __name__ == '__main__':
     print('std:')
     print(np.std(temp))
 
-    # temp = []
-    # for root, dirs, files in os.walk(output_path):
-    #     for file in files:
-    #         if file.endswith("wild_est_vs_vm3_pearson.txt"):
-    #             text_file = open(os.path.join(root, file), 'r')
-    #             temp.append(float(text_file.read().split('\n')[0]))
-    #             text_file.close()
-    # print('WRIST vs ActiGraph (in-wild) Pearson:')
-    # print('mean:')
-    # print(np.mean(temp))
-    # print('std:')
-    # print(np.std(temp))
 
     temp = []
     for root, dirs, files in os.walk(output_path):
@@ -284,6 +270,11 @@ if __name__ == '__main__':
     print('std:')
     print(np.std(temp))
 
+
+def print_spearman_overall(output_path):
+    """
+    print overall spearman
+    """
     print('Overall (combining all data points):')
     temp = []
     for root, dirs, files in os.walk(output_path):
@@ -319,3 +310,18 @@ if __name__ == '__main__':
 
     corr, _ = spearmanr(np.array(l_ainsworth_gf), np.array(l_google_fit))
     print('Spearmans correlation (Ainsworth vs Google Fit): %g' % corr)
+
+
+if __name__ == '__main__':
+    # path of model output folder
+    output_path = str(sys.argv[1])
+
+    print_r2_vs_ainsworth(output_path)
+
+    print_stats(output_path)
+
+    print_r2_wrist_vs_acti(output_path)
+
+    print_spearman_avg(output_path)
+
+    print_spearman_overall(output_path)

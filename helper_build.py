@@ -4,6 +4,7 @@ from xgboost import XGBClassifier
 from sklearn import linear_model, metrics
 from time import time
 import joblib
+import os
 
 
 def extract_features(gyro_data):
@@ -37,15 +38,12 @@ def get_data_target_table(study_path, participants):
     tables = []
 
     for p in participants:
-        # TODO Hard coded study paths
-        path_ts = study_path + '/' + p + '/In Lab/' + p + ' In Lab Log.csv'
+        path_ts = os.path.join(study_path, p, 'In Lab', p + ' In Lab Log.csv')
         df_ts = pd.read_csv(path_ts, index_col=None, header=0)
-        # TODO Hard coded study paths
-        path_table = study_path + '/' + p + '/In Lab/Summary/Actigraph/' + p + ' In Lab IntensityMETActivityLevel.csv'
+        path_table = os.path.join(study_path, p, 'In Lab/Summary/Actigraph/', p + ' In Lab IntensityMETActivityLevel.csv')
         df_table = pd.read_csv(path_table, index_col=None, header=0)
         tables.append(df_table)
-        # TODO Hard coded study paths
-        path_df = study_path + '/' + p + '/In Lab/Wrist/Aggregated/Gyroscope/Gyroscope_resampled.csv'
+        path_df = os.path.join(study_path, p, 'In Lab/Wrist/Aggregated/Gyroscope/Gyroscope_resampled.csv')
         # if using accel data to train
         # path_df = study_path + '/' + p + '/In Lab/Wrist/Aggregated/Accelerometer/Accelerometer_resampled.csv'
         df = pd.read_csv(path_df, index_col=None, header=0)
@@ -83,9 +81,10 @@ def get_data_target_table(study_path, participants):
 
     df_table_all = pd.concat(tables, sort=False).reset_index(drop=True)
 
-    new_data_training = [n for n in data_training if np.count_nonzero(np.isnan(n[0])) < 4]  # TODO why 4 can be set to const
+    nan_limit = 4
+    new_data_training = [n for n in data_training if np.count_nonzero(np.isnan(n[0])) < nan_limit]
     new_target_training = [target[i] for i in range(len(data_training)) if
-                           np.count_nonzero(np.isnan(data_training[i][0])) < 4]  # TODO why 4 can be set to const
+                           np.count_nonzero(np.isnan(data_training[i][0])) < nan_limit]
 
     np_target_training = np.array(new_target_training)
 
@@ -94,14 +93,13 @@ def get_data_target_table(study_path, participants):
     return extract_features(new_data_training), np_target_training, df_table_all
 
 
-def save_intensity_coef(df_table_all, study_path):  # TODO: why study_path param if not used
+def save_intensity_coef(df_table_all):
     """
     This function takes the aggregated table and build a linear regression model.
     The _coef is saved in a txt file for estimate_and_plot.py to use.
 
     Parameters:
         :param df_table_all: the aggregated table
-        :param study_path: the path of the study folder (the folder that contains all participants' folders)
     """
 
     l_ainsworth = df_table_all['MET (Ainsworth)'].tolist()
@@ -121,7 +119,7 @@ def save_intensity_coef(df_table_all, study_path):  # TODO: why study_path param
     print("intensity_coef (regression coef) = %g" % regr.coef_)
 
 
-def build_classification_model(data, target, study_path):
+def build_classification_model(data, target):
     """
     This function use the data and targets provided to build a classification model.
     The classification helps improving the estimation of the regression model.
@@ -129,9 +127,8 @@ def build_classification_model(data, target, study_path):
     Parameters:
         :param data: training data
         :param target: training labels
-        :param study_path: the path of the study folder (the folder that contains all participants' folders)
     """
-    # TODO can move to a settings file
+    # TODO can move to a settings file (test, then delete if not needed)
     model = XGBClassifier(learning_rate=0.01,
                           n_estimators=400,
                           max_depth=10,
@@ -149,8 +146,7 @@ def build_classification_model(data, target, study_path):
     model.fit(data, target)
     t1 = time()
     print("Training Time (minutes): %g" % (float(t1 - t0) / float(60)))
-    # TODO more meaningful model name
-    joblib.dump(model, 'xgbc.dat')
+    joblib.dump(model, 'WRIST.dat')
 
     y_pred = model.predict(data)
     print("Train Accuracy: %g" % metrics.accuracy_score(target, y_pred))
