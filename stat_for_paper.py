@@ -6,6 +6,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import cohen_kappa_score
 import sys
 from scipy.stats import spearmanr
+import pingouin as pg
 
 
 def print_r2_vs_ainsworth(output_path):
@@ -284,20 +285,15 @@ def print_spearman_overall(output_path):
                 df = pd.read_csv(path_table, index_col=None, header=0)
                 temp.append(df)
     df_table_all = pd.concat(temp).reset_index(drop=True)
+    df_table_all = df_table_all.loc[~df_table_all['estimation'].isna()].reset_index()
+    df_table_all = df_table_all.loc[df_table_all['MET (Google Fit)'] >= 0].reset_index()
 
     l_vm3_all = df_table_all['MET (VM3)'].tolist()
     l_estimation_all = df_table_all['estimation'].tolist()
     l_ainsworth = df_table_all['MET (Ainsworth)'].tolist()
     l_google_fit = df_table_all['MET (Google Fit)'].tolist()
 
-    l_google_fit = [l_google_fit[i] for i in range(len(l_estimation_all)) if not np.isnan(l_estimation_all[i])]
-    l_vm3_all = [l_vm3_all[i] for i in range(len(l_estimation_all)) if not np.isnan(l_estimation_all[i])]
-    l_estimation_all = [l_estimation_all[i] for i in range(len(l_estimation_all)) if
-                        not np.isnan(l_estimation_all[i])]
-    l_ainsworth = [l_ainsworth[i] for i in range(len(l_estimation_all)) if not np.isnan(l_estimation_all[i])]
-
-    l_google_fit = [l_google_fit[i] for i in range(len(l_google_fit)) if l_google_fit[i] >= 0]
-    l_ainsworth_gf = [l_ainsworth[i] for i in range(len(l_google_fit)) if l_google_fit[i] >= 0]
+    print('In Lab:')
 
     corr, _ = spearmanr(np.array(l_estimation_all), np.array(l_vm3_all))
     print('Spearmans correlation (WRIST vs ActiGraph VM3): %g' % corr)
@@ -308,8 +304,74 @@ def print_spearman_overall(output_path):
     corr, _ = spearmanr(np.array(l_ainsworth), np.array(l_estimation_all))
     print('Spearmans correlation (Ainsworth vs WRIST): %g' % corr)
 
-    corr, _ = spearmanr(np.array(l_ainsworth_gf), np.array(l_google_fit))
+    corr, _ = spearmanr(np.array(l_ainsworth), np.array(l_google_fit))
     print('Spearmans correlation (Ainsworth vs Google Fit): %g' % corr)
+
+    temp = []
+    for root, dirs, files in os.walk(output_path):
+        for file in files:
+            if file.endswith("_in_wild_comparison.csv"):
+                path_table = os.path.join(root, file)
+                df = pd.read_csv(path_table, index_col=None, header=0)
+                temp.append(df)
+    df_table_all = pd.concat(temp).reset_index(drop=True)
+    df_table_all = df_table_all.loc[~df_table_all['estimation'].isna()].reset_index()
+
+    print('In Wild:')
+    corr, _ = spearmanr(np.array(df_table_all['estimation']), np.array(df_table_all['MET (VM3)']))
+    print('Spearmans correlation (WRIST vs ActiGraph VM3): %g' % corr)
+
+
+def print_rm_corr(output_path):
+    temp = []
+    for root, dirs, files in os.walk(output_path):
+        for file in files:
+            if file.endswith("table_with_estimation.csv"):
+                path_table = os.path.join(root, file)
+                df = pd.read_csv(path_table, index_col=None, header=0)
+                temp.append(df)
+    df_table_all = pd.concat(temp).reset_index(drop=True)
+    df_table_all = df_table_all.loc[~df_table_all['estimation'].isna()].reset_index()
+    df_table_all = df_table_all.loc[df_table_all['MET (Google Fit)'] >= 0].reset_index()
+
+    print('In Lab:')
+
+    print('ActiGraph VM3 vs Ainsworth:')
+    g = pg.plot_rm_corr(data=df_table_all, x='MET (VM3)', y='MET (Ainsworth)', subject='Participant')
+    output = pg.rm_corr(data=df_table_all, x='MET (VM3)', y='MET (Ainsworth)', subject='Participant')
+    print(output)
+
+    print('WRIST vs Ainsworth:')
+    g = pg.plot_rm_corr(data=df_table_all, x='estimation', y='MET (Ainsworth)', subject='Participant')
+    output = pg.rm_corr(data=df_table_all, x='estimation', y='MET (Ainsworth)', subject='Participant')
+    print(output)
+
+    print('Google Fit vs Ainsworth:')
+    g = pg.plot_rm_corr(data=df_table_all, x='MET (Google Fit)', y='MET (Ainsworth)', subject='Participant')
+    output = pg.rm_corr(data=df_table_all, x='MET (Google Fit)', y='MET (Ainsworth)', subject='Participant')
+    print(output)
+
+    print('WRIST vs ActiGraph VM3:')
+    g = pg.plot_rm_corr(data=df_table_all, x='estimation', y='MET (VM3)', subject='Participant')
+    output = pg.rm_corr(data=df_table_all, x='estimation', y='MET (VM3)', subject='Participant')
+    print(output)
+
+    temp = []
+    for root, dirs, files in os.walk(output_path):
+        for file in files:
+            if file.endswith("_in_wild_comparison.csv"):
+                path_table = os.path.join(root, file)
+                df = pd.read_csv(path_table, index_col=None, header=0)
+                temp.append(df)
+    df_table_all = pd.concat(temp).reset_index(drop=True)
+    df_table_all = df_table_all.loc[~df_table_all['estimation'].isna()].reset_index()
+
+    print('In Wild:')
+
+    print('WRIST vs ActiGraph VM3:')
+    g = pg.plot_rm_corr(data=df_table_all, x='estimation', y='MET (VM3)', subject='Participant')
+    output = pg.rm_corr(data=df_table_all, x='estimation', y='MET (VM3)', subject='Participant')
+    print(output)
 
 
 if __name__ == '__main__':
@@ -325,3 +387,5 @@ if __name__ == '__main__':
     print_spearman_avg(output_path)
 
     print_spearman_overall(output_path)
+
+    print_rm_corr(output_path)
