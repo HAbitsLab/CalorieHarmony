@@ -23,7 +23,7 @@ build model, estimate and graph results
 
 > compare_wild.py
 
-in-wild: estimate and compare the results of WRIST and ActiGraph
+estimate and compare the results of WRIST and ActiGraph
 
 > stat_for_paper.py
 

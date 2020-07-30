@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 from time import time
 import joblib
 from helper_build import extract_features
-from estimate_and_plot import set_realistic_met_estimate
+from helper_estimate import set_realistic_met_estimate
 from scipy.stats import pearsonr, spearmanr
 
 
@@ -46,9 +46,9 @@ def main():
                               slient=0,
                               nthread=4
                               )
-        model = joblib.load('xgbc.dat')
+        model = joblib.load('WRIST.dat')
 
-        path_table = os.path.join(study_path, p, 'In Wild/Summary/Actigraph/', p, ' In Wild IntensityMETMinLevel.csv')
+        path_table = os.path.join(study_path, p, 'In Wild/Summary/Actigraph/', p + ' In Wild IntensityMETMinLevel.csv')
         df_table = pd.read_csv(path_table, index_col=None, header=0)
         path_gyro = os.path.join(study_path, p, 'In Wild/Wrist/Aggregated/Gyroscope/Gyroscope_resampled.csv')
         df_gyro = pd.read_csv(path_gyro, index_col=None, header=0)
@@ -79,7 +79,7 @@ def main():
 
         print("Hours of data: %g" % (float(len(df_table)) / float(60)))
 
-        set_realistic_met_estimate(df_table, study_path)
+        set_realistic_met_estimate(df_table)
         df_table.to_csv(p+'_in_wild_comparison.csv', index=False, encoding='utf8')
 
         l_datetime_all = df_table['Datetime'].tolist()

@@ -33,7 +33,7 @@ def test_and_estimate(study_path, participants):
                           nthread=4
                           )
 
-    model = joblib.load('xgbc.dat')
+    model = joblib.load('WRIST.dat')
 
     data, target, table = get_data_target_table(study_path, participants, model)
 
@@ -43,11 +43,11 @@ def test_and_estimate(study_path, participants):
     outf.close()
     print("Test Accuracy: %g" % metrics.accuracy_score(target, y_pred))
 
-    set_realistic_met_estimate(table, study_path)
+    set_realistic_met_estimate(table)
 
     table.to_csv('table_with_estimation.csv', index=False, encoding='utf8')
 
-    plot_results(table, study_path)
+    plot_results(table)
 
     t1 = time()
     print("Total estimate and test time: %g minutes" % (float(t1 - t0) / float(60)))

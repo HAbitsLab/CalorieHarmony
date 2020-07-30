@@ -16,9 +16,9 @@ def build_both_models(study_path, participants):
 
     data, target, table = get_data_target_table(study_path, participants)
 
-    save_intensity_coef(table, study_path)
+    save_intensity_coef(table)
 
-    build_classification_model(data, target, study_path)
+    build_classification_model(data, target)
 
     t1 = time()
     print("Total model build time: %g minutes" % (float(t1 - t0) / float(60)))
