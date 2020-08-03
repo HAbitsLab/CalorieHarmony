@@ -1,30 +1,99 @@
 # CalorieHarmony
 
-Make sure the wrist pipeline was run before this step
+## Requirments
+- joblib
+- numpy
+- pandas
+- XGBoost (0.80)
+- plotly
+- pingouin
+- sklearn
+- scipy
 
-(The wrist data are aggregated and sorted into one csv file, then resampled to 20hz)
+## Data Location
 
-> Preprocressing.py:  
+Under selected data folder:
 
-will use the wrist and actigraph data to generate a table 
+Place the csv that contains the participants' weight information here.
+- name it "p_weights.csv" (Required column names: "Participant",  "Weight (kg)")
 
-it will aggregate all data to be on the 1 minute level. 
+Then for each participant, create a separate folder using the participant name.
 
-input of this and output.
+Under each participant folder:
 
-PX In Lab IntensityMETActivityLevel << 
+Create in-lab and/or in-wild folder ("In Lab", "In Wild")
 
+Under "In Lab" or "In Wild" folder:
+
+Place the log csv file here. The log will contain the participant's timesheet information.
+
+- Log file name: participant_name + in-lab/in-wild + log.csv, separated by space. (ex. "P431 In Lab Log.csv")
+
+- in-lab csv columns:
+    - "Activity" (activity name, ex. "computer")
+    - "State" ("lab")
+    - "Start Date" (activity start date, MM/DD/YY, ex. "3/10/20")
+    - End Date (activity end date, MM/DD/YY, ex. "3/10/20")
+    - Start Time (activity start time, HH/MM/SS, ex. "10:05:00")
+    - End Time (activity end time, HH/MM/SS, ex. "10:10:00")
+    - Start Calorie (whatever number indicated by Google Fit, ex. "600")
+    - End Calorie  (whatever number indicated by Google Fit, ex. "700")
+    - Trial Start (trail start time, "MM/DD/YY HH:MM", ex. "3/10/20 10:05")
+    - Trial End (trail end time, "MM/DD/YY HH:MM", ex. "3/10/20 10:05")
+
+- in-wild csv columns:
+    - Same as in-lab but replace "Activity" with "Day", (free-living day number, ex. "1")
+
+Make sure the wrist data are pre-processed. The wrist data files (accelerometer and gyroscope) need to be one csv file per participant.
+
+Accelerometer data
+- rename to accelerometer.csv and put under /wrist/accelerometer
+- column names: Time, accX, accY, accZ (Time needs to be in 12 digits unix timestamp)
+
+Gyroscope data
+- rename to gyroscope.csv and put under /wrist/gyroscope
+- column names: Time, rotX, rotY, rotZ (Time needs to be in 12 digits unix timestamp)
+
+ActiGraph output file
+- rename to actigraph.csv and put under /actigraph
+
+## Run Order
+
+In terminal, cd to the repository directory.
  
+Then run in below order:
+
+> preprocressing.py:  
+
+In terminal: type "python preprocressing.py" followed by the path to data folder, participant names separated by space, then "In Lab" or "In Wild".
+
+- ex. python preprocressing.py "my/path/to/data/folder" "P301 P302 P401" "In Lab"
+
+This will use the wrist and ActiGraph data to generate minute level data needed for building the model.
+
 > cv.py
 
-cross validation
+In terminal: type "python cv.py" followed by the path to data folder, then participant names separated by space.
 
-build model, estimate and graph results
+- ex. python3 cv.py "my/path/to/data/folder" "P301 P302 P401"
+
+This will use the in-lab data of these participants to build and evaluate the WRIST model using cross validation. It also outputs some result graphs
+
+To regenerate the paper result, use "P401 P404 P405 P409 P410 P411 P415 P417 P418 P421 P422 P423 P424 P425 P427 P429 P431" from the provided sample data set.
 
 > compare_wild.py
 
-estimate and compare the results of WRIST and ActiGraph
+In terminal: type "python compare_wild.py" followed by the path to data folder, then participant names separated by space.
+
+- ex. python3 compare_wild.py "my/path/to/data/folder" "P301 P302 P401"
+
+This will use the in-wild data of these participants to estimate and compare the results of WRIST and ActiGraph.
+
+To regenerate the paper result, use "P404 P405 P409 P410 P411 P412 P415 P416 P417 P418 P419 P420 P421 P423 P424 P425 P427 P429 P431"
+ from the provided sample data set.
 
 > stat_for_paper.py
 
-print numbers in paper
+In terminal: "python stat_for_paper.py"
+
+Generate all the numbers used in the paper.
