@@ -133,11 +133,11 @@ This places you in the terminal for the docker container then you can run the **
 
 It will take a few hours to preprocess the data, create to model and output all of the stats.
 
-All of the outputs will be saved on the host system under the specifier root output_files directory.
+All of the outputs will be saved on the host system under the specifier root calorieharmonydata directory.
 
 The target outputs from the paper will saved in a file named **stat_for_paper.txt** under the calorieharmonydata directory on the host system
 
-If the user runs the docker image without the *-it* flag it will run silently in background and save the output data with not views or interaction from user.
+If the user runs the docker image without the *-it* flag it will run silently in background and save the output data with no views or interaction from user.
 
 Example:
 >  docker run -v  C:\Users\tpt4349\Documents\CalorieHarmony\calorieharmonydata:/output_files habitslab/calorie-harmony
