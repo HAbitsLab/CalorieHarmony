@@ -1,0 +1,5 @@
+.idea
+output_files
+venv
+__pycache__
+output_files.zip

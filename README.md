@@ -97,3 +97,45 @@ To regenerate the paper result, use "P404 P405 P409 P410 P411 P412 P415 P416 P41
 In terminal: "python stat_for_paper.py"
 
 Generate all the numbers used in the paper.
+
+## DOCKER BUILD
+
+Code to build the docker image
+The docker file is included to build. 
+A public image is available on docker hub to run without the need to build locally
+
+In order to view all of the output and running enter the interactive terminal (*-it*)
+
+Download and unzip the output_files.zip locally
+
+The docker container needs to share data with the host system (*-v*) the user might need to configure docker to share the local file system with docker
+
+file structure of sample data on host system:
+```
+output_files
+├── sampleData
+│   └── P401
+│   └── P404
+│   └── P405
+│   └── ...
+│   └── p_weights.csv
+```
+
+> docker run -it -v [LOCAL DIRECTORY WITH output_files]:/output_files habitslab/calorie-harmony bash
+
+Example:
+>  docker run -it -v  C:\Users\tpt4349\Documents\CalorieHarmony\output_files:/output_files habitslab/calorie-harmony bash
+
+This places you in the terminal for the docker container then you can run the **./run.sh** command to start the WRIST algorithm
+> root@3f6523f1e595:/# ./run.sh
+
+It will take a few hours to preprocess the data, create to model and output all of the stats.
+
+All of the outputs will be saved on the host system under the specifier root output_files directory.
+
+The target outputs from the paper will saved in a file named **stat_for_paper.txt** under the output_files directory on the host system
+
+If the user runs the docker image without the *-it* flag it will run silently in background and save the output data with not views or interaction from user.
+
+Example:
+>  docker run -v  C:\Users\tpt4349\Documents\CalorieHarmony\output_files:/output_files habitslab/calorie-harmony
