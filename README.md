@@ -117,12 +117,23 @@ file structure of sample data on host system:
 calorieharmonydata
 ├── sampleData
 │   └── P401
-│   └──── In Lab
-│   └──── In Wild
+│       ├── In Lab
+│       │   ├── Actigraph
+│       │   ├── Summary
+│       │   ├── Wrist
+│       │   |   ├── Aggregated
+│       │   |   |   ├── Accelerometer
+│       │   |   |   ├── Gyroscope
+│       ├── In Wild
 │   └── P404
 │   └── P405
 │   └── ...
 │   └── p_weights.csv
+
+├── screens
+│   └── App
+│       ├── components
+│       ├── screens
 ```
 
 > docker run -it -v [LOCAL DIRECTORY WITH output_files]:/output_files habitslab/calorie-harmony bash
