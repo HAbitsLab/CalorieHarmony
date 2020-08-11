@@ -117,6 +117,8 @@ file structure of sample data on host system:
 calorieharmonydata
 ├── sampleData
 │   └── P401
+│   └──── In Lab
+│   └──── In Wild
 │   └── P404
 │   └── P405
 │   └── ...
