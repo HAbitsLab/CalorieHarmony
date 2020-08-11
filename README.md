@@ -129,11 +129,6 @@ calorieharmonydata
 │   └── P405
 │   └── ...
 │   └── p_weights.csv
-
-├── screens
-│   └── App
-│       ├── components
-│       ├── screens
 ```
 
 > docker run -it -v [LOCAL DIRECTORY WITH output_files]:/output_files habitslab/calorie-harmony bash
